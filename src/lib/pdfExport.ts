@@ -633,24 +633,33 @@ function drawExercisesOnPage(
           doc.line(sqX, sqY + sqH / 2, sqX + sqW, sqY + sqH / 2);
         }
       } else {
-        const apexX = centerX;
-        const apexY = y + 5;
-        const baseLeft = centerX - 24;
-        const baseRight = centerX + 24;
-        const baseY = y + 34;
+        const cx = centerX;
+        const cy = y + 19.5;
+        const rot = (px: number, py: number): [number, number] => {
+          const rx = px - cx;
+          const ry = py - cy;
+          if (fig.orientation === "down") return [cx - rx, cy - ry];
+          if (fig.orientation === "right") return [cx - ry, cy + rx];
+          if (fig.orientation === "left") return [cx + ry, cy - rx];
+          return [px, py];
+        };
 
-        doc.triangle(apexX, apexY, baseRight, baseY, baseLeft, baseY, "S");
+        const [ax, ay] = rot(cx, y + 5);
+        const [blx, bly] = rot(cx - 22, y + 33);
+        const [brx, bry] = rot(cx + 22, y + 33);
+
+        doc.triangle(ax, ay, brx, bry, blx, bly, "S");
         for (let s = 1; s < fig.sectors; s++) {
-          const bx = baseLeft + ((baseRight - baseLeft) * s) / fig.sectors;
-          doc.line(apexX, apexY, bx, baseY);
+          const t = s / fig.sectors;
+          const [bx, by] = rot(cx - 22 + 44 * t, y + 33);
+          doc.line(ax, ay, bx, by);
         }
         doc.setDrawColor(37, 99, 235);
         for (let l = 1; l < fig.levels; l++) {
           const t = l / fig.levels;
-          const ly = apexY + (baseY - apexY) * t;
-          const lx = apexX + (baseLeft - apexX) * t;
-          const rx = apexX + (baseRight - apexX) * t;
-          doc.line(lx, ly, rx, ly);
+          const [lx, ly] = rot(cx - 22 * t, y + 5 + 28 * t);
+          const [rx, ry] = rot(cx + 22 * t, y + 5 + 28 * t);
+          doc.line(lx, ly, rx, ry);
         }
       }
 

@@ -81,7 +81,7 @@ export interface GeneratedExercise {
   cubeGrid?: number[][];
   // For geometric triangle counting
   triangleFigure?:
-    | { type: "fan"; sectors: number; levels: number }
+    | { type: "fan"; sectors: number; levels: number; orientation?: "up" | "down" | "left" | "right" }
     | { type: "diagonals"; mode: "single" | "cross" };
   // Answer representation
   answer: string;

@@ -807,8 +807,12 @@ function generateCubeCount(config: WorksheetConfig, id: number): GeneratedExerci
 }
 
 function generateTriangleCount(config: WorksheetConfig, id: number): GeneratedExercise {
-  if (config.difficulty === "dificil" && activeRng() < 0.35) {
-    const mode = activeRng() > 0.5 ? "cross" : "single";
+  if (
+    (config.difficulty === "dificil" || config.difficulty === "medio") &&
+    activeRng() < 0.25
+  ) {
+    const mode =
+      config.difficulty === "dificil" && activeRng() > 0.5 ? "cross" : "single";
     // Square with 2 diagonals = 8 triangles; with cross + 2 diagonals = 16 triangles
     const ans = mode === "single" ? 8 : 16;
     return {
@@ -819,14 +823,22 @@ function generateTriangleCount(config: WorksheetConfig, id: number): GeneratedEx
     };
   }
 
+  const orientations: ("up" | "down" | "left" | "right")[] = [
+    "up",
+    "down",
+    "left",
+    "right",
+  ];
+  const orientation = orientations[randInt(0, orientations.length - 1)];
+
   const sectors =
     config.difficulty === "facil"
-      ? randInt(2, 4)
+      ? randInt(2, 5)
       : config.difficulty === "medio"
-      ? randInt(3, 5)
+      ? randInt(3, 6)
       : config.difficulty === "dificil"
       ? randInt(4, 6)
-      : randInt(6, 8);
+      : randInt(5, 8);
   const levels =
     config.difficulty === "facil"
       ? 1
@@ -834,15 +846,45 @@ function generateTriangleCount(config: WorksheetConfig, id: number): GeneratedEx
       ? randInt(1, 2)
       : config.difficulty === "dificil"
       ? randInt(2, 3)
-      : randInt(3, 4);
+      : randInt(3, 5);
 
   const ans = levels * ((sectors * (sectors + 1)) / 2);
   return {
     id,
     kind: "triangleCount",
-    triangleFigure: { type: "fan", sectors, levels },
+    triangleFigure: { type: "fan", sectors, levels, orientation },
     answer: String(ans),
   };
+}
+
+function buildExerciseKey(candidate: GeneratedExercise): string {
+  if (
+    (candidate.operator === "+" || candidate.operator === "×") &&
+    candidate.a !== undefined &&
+    candidate.b !== undefined
+  ) {
+    const [minOp, maxOp] =
+      candidate.a <= candidate.b
+        ? [candidate.a, candidate.b]
+        : [candidate.b, candidate.a];
+    return `${candidate.kind}:${minOp}${candidate.operator}${maxOp}`;
+  }
+  if (candidate.triangleFigure) {
+    const tf = candidate.triangleFigure;
+    return tf.type === "fan"
+      ? `tri:fan:${tf.sectors}x${tf.levels}:${tf.orientation ?? "up"}`
+      : `tri:diag:${tf.mode}`;
+  }
+  if (candidate.cubeGrid) {
+    return `cube:${candidate.cubeGrid.map((r) => r.join(",")).join("|")}`;
+  }
+  if (candidate.olympiad) {
+    return `oly:${candidate.olympiad.question}`;
+  }
+  if (candidate.balance) {
+    return `bal:${candidate.balance.leftX}x+${candidate.balance.leftConst}=${candidate.balance.rightX}x+${candidate.balance.rightConst}`;
+  }
+  return `${candidate.kind}-${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}-${candidate.fracB?.num}/${candidate.fracB?.den}`;
 }
 
 export function generateWorksheet(
@@ -852,10 +894,11 @@ export function generateWorksheet(
   activeRng = createRng(seed);
   const exercises: GeneratedExercise[] = [];
   const seen = new Set<string>();
+  const maxRetries = 150;
 
   for (let i = 1; i <= config.count; i++) {
     let ex: GeneratedExercise | null = null;
-    for (let retry = 0; retry < 15; retry++) {
+    for (let retry = 0; retry < maxRetries; retry++) {
       let candidate: GeneratedExercise;
       switch (config.kind) {
         case "addition":
@@ -918,8 +961,8 @@ export function generateWorksheet(
           break;
       }
 
-      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.olympiad?.question}-${candidate.cubeGrid?.flat().join(",")}-${candidate.triangleFigure?.type}-${candidate.answer}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
-      if (!seen.has(key) || retry === 14) {
+      const key = buildExerciseKey(candidate);
+      if (!seen.has(key) || retry === maxRetries - 1) {
         seen.add(key);
         ex = candidate;
         break;

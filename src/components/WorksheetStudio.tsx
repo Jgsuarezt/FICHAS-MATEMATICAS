@@ -316,6 +316,14 @@ function TriangleCountSvg({
   const baseLeft = 20;
   const baseRight = 200;
   const baseY = 114;
+  const angle =
+    figure.orientation === "down"
+      ? 180
+      : figure.orientation === "left"
+      ? -90
+      : figure.orientation === "right"
+      ? 90
+      : 0;
 
   return (
     <svg
@@ -324,13 +332,14 @@ function TriangleCountSvg({
       role="img"
       aria-label="Triángulo dividido para conteo"
     >
-      <polygon
-        points={`${apexX},${apexY} ${baseRight},${baseY} ${baseLeft},${baseY}`}
-        fill="#f8fafc"
-        stroke="#0f172a"
-        strokeWidth={2}
-        strokeLinejoin="round"
-      />
+      <g transform={`rotate(${angle} 110 65)`}>
+        <polygon
+          points={`${apexX},${apexY} ${baseRight},${baseY} ${baseLeft},${baseY}`}
+          fill="#f8fafc"
+          stroke="#0f172a"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
       {/* Sector rays */}
       {Array.from({ length: figure.sectors - 1 }).map((_, idx) => {
         const bx = baseLeft + ((baseRight - baseLeft) * (idx + 1)) / figure.sectors;
@@ -364,6 +373,7 @@ function TriangleCountSvg({
           />
         );
       })}
+      </g>
     </svg>
   );
 }
