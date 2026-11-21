@@ -215,6 +215,156 @@ function OlympiadDiagramSvg({
   return null;
 }
 
+function CubeStackSvg({ grid }: { grid: number[][] }) {
+  const dx = 18;
+  const dy = 10;
+  const dz = 20;
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+
+  const cubes: { x: number; y: number; key: string }[] = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const h = grid[r][c];
+      for (let z = 0; z < h; z++) {
+        const isoX = (c - r) * dx + 110;
+        const isoY = (c + r) * dy - z * dz + 88;
+        cubes.push({ x: isoX, y: isoY, key: `${r}-${c}-${z}` });
+      }
+    }
+  }
+
+  return (
+    <svg
+      viewBox="0 0 220 140"
+      className="mx-auto w-52 select-none"
+      role="img"
+      aria-label="Pila de cubos en 3D"
+    >
+      {cubes.map(({ x, y, key }) => (
+        <g key={key}>
+          {/* Top face */}
+          <polygon
+            points={`${x},${y - dz} ${x + dx},${y - dz + dy} ${x},${y - dz + 2 * dy} ${x - dx},${y - dz + dy}`}
+            fill="#dbeafe"
+            stroke="#1e3a8a"
+            strokeWidth={1.3}
+            strokeLinejoin="round"
+          />
+          {/* Left face */}
+          <polygon
+            points={`${x - dx},${y - dz + dy} ${x},${y - dz + 2 * dy} ${x},${y + 2 * dy} ${x - dx},${y + dy}`}
+            fill="#93c5fd"
+            stroke="#1e3a8a"
+            strokeWidth={1.3}
+            strokeLinejoin="round"
+          />
+          {/* Right face */}
+          <polygon
+            points={`${x},${y - dz + 2 * dy} ${x + dx},${y - dz + dy} ${x + dx},${y + dy} ${x},${y + 2 * dy}`}
+            fill="#60a5fa"
+            stroke="#1e3a8a"
+            strokeWidth={1.3}
+            strokeLinejoin="round"
+          />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function TriangleCountSvg({
+  figure,
+}: {
+  figure: NonNullable<GeneratedExercise["triangleFigure"]>;
+}) {
+  if (figure.type === "diagonals") {
+    return (
+      <svg
+        viewBox="0 0 180 130"
+        className="mx-auto w-44 select-none"
+        role="img"
+        aria-label="Figura geométrica para contar triángulos"
+      >
+        <rect
+          x={35}
+          y={15}
+          width={110}
+          height={100}
+          fill="#f8fafc"
+          stroke="#0f172a"
+          strokeWidth={2}
+        />
+        <line x1={35} y1={15} x2={145} y2={115} stroke="#0f172a" strokeWidth={1.8} />
+        <line x1={145} y1={15} x2={35} y2={115} stroke="#0f172a" strokeWidth={1.8} />
+        {figure.mode === "cross" && (
+          <>
+            <line x1={90} y1={15} x2={90} y2={115} stroke="#2563eb" strokeWidth={1.6} />
+            <line x1={35} y1={65} x2={145} y2={65} stroke="#2563eb" strokeWidth={1.6} />
+          </>
+        )}
+      </svg>
+    );
+  }
+
+  // Fan from apex (110, 14) to base (20..200, 114)
+  const apexX = 110;
+  const apexY = 14;
+  const baseLeft = 20;
+  const baseRight = 200;
+  const baseY = 114;
+
+  return (
+    <svg
+      viewBox="0 0 220 130"
+      className="mx-auto w-52 select-none"
+      role="img"
+      aria-label="Triángulo dividido para conteo"
+    >
+      <polygon
+        points={`${apexX},${apexY} ${baseRight},${baseY} ${baseLeft},${baseY}`}
+        fill="#f8fafc"
+        stroke="#0f172a"
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      {/* Sector rays */}
+      {Array.from({ length: figure.sectors - 1 }).map((_, idx) => {
+        const bx = baseLeft + ((baseRight - baseLeft) * (idx + 1)) / figure.sectors;
+        return (
+          <line
+            key={`ray-${idx}`}
+            x1={apexX}
+            y1={apexY}
+            x2={bx}
+            y2={baseY}
+            stroke="#0f172a"
+            strokeWidth={1.6}
+          />
+        );
+      })}
+      {/* Horizontal levels */}
+      {Array.from({ length: figure.levels - 1 }).map((_, idx) => {
+        const t = (idx + 1) / figure.levels;
+        const y = apexY + (baseY - apexY) * t;
+        const lx = apexX + (baseLeft - apexX) * t;
+        const rx = apexX + (baseRight - apexX) * t;
+        return (
+          <line
+            key={`lvl-${idx}`}
+            x1={lx}
+            y1={y}
+            x2={rx}
+            y2={y}
+            stroke="#2563eb"
+            strokeWidth={1.6}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
   const [config, setConfig] = useState<WorksheetConfig>(() => ({
     topicSlug: topic.slug,
@@ -678,6 +828,8 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                 : isVertical && config.kind === "division"
                 ? "grid-cols-1 sm:grid-cols-2"
                 : config.kind === "balance" ||
+                  config.kind === "cubeCount" ||
+                  config.kind === "triangleCount" ||
                   config.kind === "sequence" ||
                   config.kind === "fractions" ||
                   config.kind === "roman" ||
@@ -696,7 +848,11 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
           >
             {exercises.map((ex) => {
               const gridBgClass =
-                config.showGrid && ex.kind !== "balance" && ex.kind !== "olympiad"
+                config.showGrid &&
+                ex.kind !== "balance" &&
+                ex.kind !== "olympiad" &&
+                ex.kind !== "cubeCount" &&
+                ex.kind !== "triangleCount"
                   ? "rounded-lg border border-slate-200 bg-[linear-gradient(to_right,#dbe4f0_1px,transparent_1px),linear-gradient(to_bottom,#dbe4f0_1px,transparent_1px)] bg-[size:20px_20px] p-3"
                   : "";
               const divisionSpaceClass =
@@ -861,6 +1017,30 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       )}
                     </div>
                   </div>
+                ) : ex.kind === "cubeCount" && ex.cubeGrid ? (
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/40 p-3">
+                    <CubeStackSvg grid={ex.cubeGrid} />
+                    <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <span>Total cubos:</span>
+                      {showAnswersOnScreen ? (
+                        <span className="text-base text-emerald-600">{ex.answer}</span>
+                      ) : (
+                        <span className="inline-block w-14 border-b-2 border-slate-400" />
+                      )}
+                    </div>
+                  </div>
+                ) : ex.kind === "triangleCount" && ex.triangleFigure ? (
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/40 p-3">
+                    <TriangleCountSvg figure={ex.triangleFigure} />
+                    <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <span>Total triángulos:</span>
+                      {showAnswersOnScreen ? (
+                        <span className="text-base text-emerald-600">{ex.answer}</span>
+                      ) : (
+                        <span className="inline-block w-14 border-b-2 border-slate-400" />
+                      )}
+                    </div>
+                  </div>
                 ) : ex.kind === "olympiad" && ex.olympiad ? (
                   <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/40 p-4">
                     <p
@@ -946,7 +1126,9 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             className={`mt-6 grid grid-cols-1 gap-4 ${
               config.kind === "olympiad"
                 ? "grid-cols-1"
-                : config.kind === "balance"
+                : config.kind === "balance" ||
+                  config.kind === "cubeCount" ||
+                  config.kind === "triangleCount"
                 ? "sm:grid-cols-2"
                 : "sm:grid-cols-2 lg:grid-cols-3"
             }`}
@@ -979,6 +1161,18 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                   {ex.kind === "balance" && ex.balance && (
                     <div className="mt-2 flex justify-center">
                       <BalanceScaleSvg balance={ex.balance} />
+                    </div>
+                  )}
+
+                  {ex.kind === "cubeCount" && ex.cubeGrid && (
+                    <div className="mt-2 flex justify-center">
+                      <CubeStackSvg grid={ex.cubeGrid} />
+                    </div>
+                  )}
+
+                  {ex.kind === "triangleCount" && ex.triangleFigure && (
+                    <div className="mt-2 flex justify-center">
+                      <TriangleCountSvg figure={ex.triangleFigure} />
                     </div>
                   )}
 
@@ -1022,6 +1216,10 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                     <div className="font-mono text-base font-bold text-slate-900">
                       {ex.kind === "balance"
                         ? "x ="
+                        : ex.kind === "cubeCount"
+                        ? "Total cubos:"
+                        : ex.kind === "triangleCount"
+                        ? "Total triángulos:"
                         : ex.kind === "fractions" && ex.fracA && ex.fracB
                         ? `${ex.fracA.num}/${ex.fracA.den} ${ex.operator} ${ex.fracB.num}/${ex.fracB.den} =`
                         : ex.kind === "comparison"

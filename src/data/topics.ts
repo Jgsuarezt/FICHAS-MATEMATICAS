@@ -1010,6 +1010,90 @@ export const TOPICS: TopicDefinition[] = [
       ],
     },
   },
+  {
+    slug: "conteo-de-cubos",
+    name: "Conteo de cubos en 3D",
+    shortName: "Conteo de cubos",
+    category: "Numeración",
+    grades: ["2-primaria", "3-primaria", "4-primaria", "5-primaria"],
+    badge: "Visual 3D",
+    description:
+      "Desafíos de visión espacial con pilas de cubos en 3D (estrategia de conteo por columnas, incluyendo los cubos ocultos debajo).",
+    seoTitle: "Fichas de Conteo de Cubos en 3D en PDF Gratis + Solucionario",
+    seoDescription:
+      "Descarga fichas de conteo de cubos apilados en 3D en PDF gratis con solucionario. Entrena la visión espacial en Primaria.",
+    defaultConfig: {
+      kind: "cubeCount",
+      difficulty: "facil",
+      count: 12,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Contar cubos apilados en 3D desarrolla la percepción espacial y enseña a deducir los cubos que no se ven pero sostienen a los de arriba.",
+      howToTeach: [
+        "Mira la figura desde arriba: cada cubo superior es el techo de una columna.",
+        "Escribe encima de cada techo cuántos cubos tiene esa columna (contando los ocultos debajo).",
+        "Suma todos los números de las columnas para obtener el total exacto.",
+      ],
+      tips: [
+        "En nivel Fácil las torres tienen hasta 3 pisos; en Medio y Difícil aumentan la base y la altura.",
+      ],
+      faqs: [
+        {
+          q: "¿Se cuentan los cubos ocultos que sostienen a los de arriba?",
+          a: "Sí, no hay cubos flotando: cada columna tiene todos los cubos desde el suelo hasta su techo.",
+        },
+      ],
+    },
+  },
+  {
+    slug: "conteo-de-triangulos",
+    name: "Conteo de triángulos",
+    shortName: "Conteo de triángulos",
+    category: "Tablas y Cálculo",
+    grades: ["3-primaria", "4-primaria", "5-primaria", "6-primaria"],
+    badge: "Visual",
+    description:
+      "Fichas de conteo sistemático de figuras geométricas (triángulos simples y compuestos) para entrenar la atención y el razonamiento.",
+    seoTitle: "Fichas de Conteo de Triángulos en PDF Gratis + Solucionario",
+    seoDescription:
+      "Genera fichas de conteo de triángulos en PDF gratis con respuestas. Ejercicios visuales de geometría y olimpiadas matemáticas.",
+    defaultConfig: {
+      kind: "triangleCount",
+      difficulty: "facil",
+      count: 12,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "El conteo de triángulos es un clásico de los retos matemáticos escolares. Enseña a contar con orden (de 1 pieza, de 2 piezas, de 3 piezas...) en lugar de contar al azar.",
+      howToTeach: [
+        "Numera los espacios simples (1, 2, 3...) dentro del triángulo.",
+        "Cuenta primero los triángulos de 1 región, luego los formados al juntar 2 regiones, luego 3, etc.",
+        "Para triángulos divididos desde el vértice superior en n partes: Total = 1 + 2 + ... + n.",
+      ],
+      tips: [
+        "En nivel Medio y Difícil se añaden cortes horizontales y diagonales para multiplicar el reto.",
+      ],
+      faqs: [
+        {
+          q: "¿El solucionario incluye el total exacto de triángulos?",
+          a: "Sí, calcula automáticamente todos los triángulos simples y compuestos de cada figura.",
+        },
+      ],
+    },
+  },
 ];
 
 export function getTopicBySlug(slug: string): TopicDefinition | undefined {

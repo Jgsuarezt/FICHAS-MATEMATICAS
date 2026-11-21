@@ -749,6 +749,72 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
   };
 }
 
+function generateCubeCount(config: WorksheetConfig, id: number): GeneratedExercise {
+  const rows = config.difficulty === "facil" ? 2 : 3;
+  const cols = config.difficulty === "dificil" ? 4 : config.difficulty === "medio" ? 3 : 2;
+  const maxH = config.difficulty === "facil" ? 3 : config.difficulty === "medio" ? 3 : 4;
+
+  const grid: number[][] = Array.from({ length: rows }, () =>
+    Array.from({ length: cols }, () => 0)
+  );
+
+  // Monotonic heights from back-left (0,0) down to front-right so every column top is visible
+  let total = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const topLimit = r > 0 ? grid[r - 1][c] : maxH;
+      const leftLimit = c > 0 ? grid[r][c - 1] : maxH;
+      const upper = Math.min(topLimit, leftLimit);
+      const minVal = r === 0 && c === 0 ? Math.max(2, upper - 1) : r === 0 || c === 0 ? 1 : 0;
+      const h = randInt(Math.min(minVal, upper), upper);
+      grid[r][c] = h;
+      total += h;
+    }
+  }
+
+  return {
+    id,
+    kind: "cubeCount",
+    cubeGrid: grid,
+    answer: String(total),
+  };
+}
+
+function generateTriangleCount(config: WorksheetConfig, id: number): GeneratedExercise {
+  if (config.difficulty === "dificil" && activeRng() < 0.35) {
+    const mode = activeRng() > 0.5 ? "cross" : "single";
+    // Square with 2 diagonals = 8 triangles; with cross + 2 diagonals = 16 triangles
+    const ans = mode === "single" ? 8 : 16;
+    return {
+      id,
+      kind: "triangleCount",
+      triangleFigure: { type: "diagonals", mode },
+      answer: String(ans),
+    };
+  }
+
+  const sectors =
+    config.difficulty === "facil"
+      ? randInt(2, 4)
+      : config.difficulty === "medio"
+      ? randInt(3, 5)
+      : randInt(4, 6);
+  const levels =
+    config.difficulty === "facil"
+      ? 1
+      : config.difficulty === "medio"
+      ? randInt(1, 2)
+      : randInt(2, 3);
+
+  const ans = levels * ((sectors * (sectors + 1)) / 2);
+  return {
+    id,
+    kind: "triangleCount",
+    triangleFigure: { type: "fan", sectors, levels },
+    answer: String(ans),
+  };
+}
+
 export function generateWorksheet(
   config: WorksheetConfig,
   seed = 1
@@ -810,13 +876,19 @@ export function generateWorksheet(
         case "olympiad":
           candidate = generateOlympiad(config, i);
           break;
+        case "cubeCount":
+          candidate = generateCubeCount(config, i);
+          break;
+        case "triangleCount":
+          candidate = generateTriangleCount(config, i);
+          break;
         case "mental":
         default:
           candidate = generateMental(config, i);
           break;
       }
 
-      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.olympiad?.question}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
+      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.olympiad?.question}-${candidate.cubeGrid?.flat().join(",")}-${candidate.triangleFigure?.type}-${candidate.answer}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
       if (!seen.has(key) || retry === 14) {
         seen.add(key);
         ex = candidate;

@@ -124,7 +124,11 @@ function getGridLayout(config: WorksheetConfig) {
     return { isVertical: false, cols: 1, maxPerPage: 4, minCellH: 54 };
   }
 
-  if (config.kind === "balance") {
+  if (
+    config.kind === "balance" ||
+    config.kind === "cubeCount" ||
+    config.kind === "triangleCount"
+  ) {
     return { isVertical, cols: 2, maxPerPage: 8, minCellH: 54 };
   }
 
@@ -190,7 +194,13 @@ function drawExercisesOnPage(
     const badgeY = isVertical && ex.kind === "division" ? y + 7.5 : y + 5;
     doc.text(`${ex.id})`, x + 1.5, badgeY);
 
-    if (useGrid && ex.kind !== "balance" && ex.kind !== "olympiad") {
+    if (
+      useGrid &&
+      ex.kind !== "balance" &&
+      ex.kind !== "olympiad" &&
+      ex.kind !== "cubeCount" &&
+      ex.kind !== "triangleCount"
+    ) {
       if (isVertical && ex.kind === "division") {
         drawMathGrid(doc, x + 9, y + 2, cellW - 15, cellH - 7, 5);
       } else if (isVertical) {
@@ -520,6 +530,137 @@ function drawExercisesOnPage(
             }
           }
         }
+      }
+    } else if (ex.kind === "cubeCount" && ex.cubeGrid) {
+      const grid = ex.cubeGrid;
+      const dx = 5.2;
+      const dy = 2.9;
+      const dz = 5.8;
+      const centerX = x + cellW / 2;
+      const baseY = y + 27;
+
+      doc.setLineWidth(0.35);
+      doc.setDrawColor(30, 58, 138);
+
+      for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < (grid[r]?.length ?? 0); c++) {
+          const h = grid[r][c];
+          for (let z = 0; z < h; z++) {
+            const cx = centerX + (c - r) * dx;
+            const cy = baseY + (c + r) * dy - z * dz;
+
+            // Top face
+            doc.setFillColor(219, 234, 254);
+            doc.lines(
+              [
+                [dx, dy],
+                [-dx, dy],
+                [-dx, -dy],
+              ],
+              cx,
+              cy - dz,
+              [1, 1],
+              "FD",
+              true
+            );
+
+            // Left face
+            doc.setFillColor(147, 197, 253);
+            doc.lines(
+              [
+                [dx, dy],
+                [0, dz],
+                [-dx, -dy],
+              ],
+              cx - dx,
+              cy - dz + dy,
+              [1, 1],
+              "FD",
+              true
+            );
+
+            // Right face
+            doc.setFillColor(96, 165, 250);
+            doc.lines(
+              [
+                [dx, -dy],
+                [0, dz],
+                [-dx, dy],
+              ],
+              cx,
+              cy - dz + 2 * dy,
+              [1, 1],
+              "FD",
+              true
+            );
+          }
+        }
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42);
+      const ansY = y + cellH - 8;
+      doc.text("Total cubos:", centerX - 18, ansY);
+      if (showAnswers) {
+        doc.setTextColor(22, 163, 74);
+        doc.text(ex.answer, centerX + 7, ansY);
+      } else {
+        doc.setDrawColor(148, 163, 184);
+        doc.line(centerX + 5, ansY + 0.5, centerX + 20, ansY + 0.5);
+      }
+    } else if (ex.kind === "triangleCount" && ex.triangleFigure) {
+      const fig = ex.triangleFigure;
+      const centerX = x + cellW / 2;
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(0.45);
+
+      if (fig.type === "diagonals") {
+        const sqX = centerX - 16;
+        const sqY = y + 5;
+        const sqW = 32;
+        const sqH = 28;
+        doc.rect(sqX, sqY, sqW, sqH);
+        doc.line(sqX, sqY, sqX + sqW, sqY + sqH);
+        doc.line(sqX + sqW, sqY, sqX, sqY + sqH);
+        if (fig.mode === "cross") {
+          doc.setDrawColor(37, 99, 235);
+          doc.line(sqX + sqW / 2, sqY, sqX + sqW / 2, sqY + sqH);
+          doc.line(sqX, sqY + sqH / 2, sqX + sqW, sqY + sqH / 2);
+        }
+      } else {
+        const apexX = centerX;
+        const apexY = y + 5;
+        const baseLeft = centerX - 24;
+        const baseRight = centerX + 24;
+        const baseY = y + 34;
+
+        doc.triangle(apexX, apexY, baseRight, baseY, baseLeft, baseY, "S");
+        for (let s = 1; s < fig.sectors; s++) {
+          const bx = baseLeft + ((baseRight - baseLeft) * s) / fig.sectors;
+          doc.line(apexX, apexY, bx, baseY);
+        }
+        doc.setDrawColor(37, 99, 235);
+        for (let l = 1; l < fig.levels; l++) {
+          const t = l / fig.levels;
+          const ly = apexY + (baseY - apexY) * t;
+          const lx = apexX + (baseLeft - apexX) * t;
+          const rx = apexX + (baseRight - apexX) * t;
+          doc.line(lx, ly, rx, ly);
+        }
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42);
+      const ansY = y + cellH - 8;
+      doc.text("Total triángulos:", centerX - 21, ansY);
+      if (showAnswers) {
+        doc.setTextColor(22, 163, 74);
+        doc.text(ex.answer, centerX + 10, ansY);
+      } else {
+        doc.setDrawColor(148, 163, 184);
+        doc.line(centerX + 8, ansY + 0.5, centerX + 22, ansY + 0.5);
       }
     } else {
       // Horizontal standard / mental

@@ -15,7 +15,9 @@ export type ExerciseKind =
   | "mcmMcd"
   | "combined"
   | "balance"
-  | "olympiad";
+  | "olympiad"
+  | "cubeCount"
+  | "triangleCount";
 
 export type DifficultyLevel = "facil" | "medio" | "dificil";
 
@@ -75,6 +77,12 @@ export interface GeneratedExercise {
       | { type: "segment"; total: number; denom: number }
       | { type: "tiledRoom"; cols: number; rows: number };
   };
+  // For 3D isometric cube counting (matrix of column heights [row][col])
+  cubeGrid?: number[][];
+  // For geometric triangle counting
+  triangleFigure?:
+    | { type: "fan"; sectors: number; levels: number }
+    | { type: "diagonals"; mode: "single" | "cross" };
   // Answer representation
   answer: string;
   // Optional extra note (e.g., remainder)
