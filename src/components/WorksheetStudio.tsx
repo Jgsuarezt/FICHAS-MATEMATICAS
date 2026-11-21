@@ -216,19 +216,22 @@ function OlympiadDiagramSvg({
 }
 
 function CubeStackSvg({ grid }: { grid: number[][] }) {
-  const dx = 18;
-  const dy = 10;
-  const dz = 20;
   const rows = grid.length;
   const cols = grid[0]?.length ?? 0;
+  const maxH = Math.max(...grid.flat(), 1);
+  const isLarge = rows >= 4 || cols >= 4 || maxH >= 5;
+  const dx = isLarge ? 14 : 18;
+  const dy = isLarge ? 8 : 10;
+  const dz = isLarge ? 15 : 20;
+  const baseY = isLarge ? 96 : 88;
 
   const cubes: { x: number; y: number; key: string }[] = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const h = grid[r][c];
       for (let z = 0; z < h; z++) {
-        const isoX = (c - r) * dx + 110;
-        const isoY = (c + r) * dy - z * dz + 88;
+        const isoX = (c - r) * dx + 115;
+        const isoY = (c + r) * dy - z * dz + baseY;
         cubes.push({ x: isoX, y: isoY, key: `${r}-${c}-${z}` });
       }
     }
@@ -236,8 +239,8 @@ function CubeStackSvg({ grid }: { grid: number[][] }) {
 
   return (
     <svg
-      viewBox="0 0 220 140"
-      className="mx-auto w-52 select-none"
+      viewBox="0 0 230 155"
+      className="mx-auto w-56 select-none"
       role="img"
       aria-label="Pila de cubos en 3D"
     >
@@ -512,8 +515,8 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
               Dificultad
             </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(["facil", "medio", "dificil"] as DifficultyLevel[]).map((lvl) => (
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {(["facil", "medio", "dificil", "avanzado"] as DifficultyLevel[]).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
@@ -524,7 +527,13 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {lvl === "facil" ? "Fácil" : lvl === "medio" ? "Medio" : "Difícil"}
+                  {lvl === "facil"
+                    ? "Fácil"
+                    : lvl === "medio"
+                    ? "Medio"
+                    : lvl === "dificil"
+                    ? "Difícil"
+                    : "Avanzado"}
                 </button>
               ))}
             </div>

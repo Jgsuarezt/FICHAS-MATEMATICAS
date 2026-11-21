@@ -19,7 +19,7 @@ export type ExerciseKind =
   | "cubeCount"
   | "triangleCount";
 
-export type DifficultyLevel = "facil" | "medio" | "dificil";
+export type DifficultyLevel = "facil" | "medio" | "dificil" | "avanzado";
 
 export interface WorksheetConfig {
   topicSlug: string;

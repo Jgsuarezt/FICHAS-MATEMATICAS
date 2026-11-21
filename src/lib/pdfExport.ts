@@ -533,11 +533,15 @@ function drawExercisesOnPage(
       }
     } else if (ex.kind === "cubeCount" && ex.cubeGrid) {
       const grid = ex.cubeGrid;
-      const dx = 5.2;
-      const dy = 2.9;
-      const dz = 5.8;
+      const rows = grid.length;
+      const cols = grid[0]?.length ?? 0;
+      const maxH = Math.max(...grid.flat(), 1);
+      const isLarge = rows >= 4 || cols >= 4 || maxH >= 5;
+      const dx = isLarge ? 4.1 : 5.2;
+      const dy = isLarge ? 2.3 : 2.9;
+      const dz = isLarge ? 4.5 : 5.8;
       const centerX = x + cellW / 2;
-      const baseY = y + 27;
+      const baseY = isLarge ? y + 29 : y + 27;
 
       doc.setLineWidth(0.35);
       doc.setDrawColor(30, 58, 138);

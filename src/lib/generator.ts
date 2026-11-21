@@ -750,9 +750,26 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
 }
 
 function generateCubeCount(config: WorksheetConfig, id: number): GeneratedExercise {
-  const rows = config.difficulty === "facil" ? 2 : 3;
-  const cols = config.difficulty === "dificil" ? 4 : config.difficulty === "medio" ? 3 : 2;
-  const maxH = config.difficulty === "facil" ? 3 : config.difficulty === "medio" ? 3 : 4;
+  const rows =
+    config.difficulty === "facil"
+      ? 2
+      : config.difficulty === "avanzado"
+      ? 4
+      : 3;
+  const cols =
+    config.difficulty === "facil"
+      ? 2
+      : config.difficulty === "medio"
+      ? 3
+      : 4;
+  const maxH =
+    config.difficulty === "facil"
+      ? 3
+      : config.difficulty === "medio"
+      ? 3
+      : config.difficulty === "dificil"
+      ? 4
+      : 5;
 
   const grid: number[][] = Array.from({ length: rows }, () =>
     Array.from({ length: cols }, () => 0)
@@ -765,7 +782,16 @@ function generateCubeCount(config: WorksheetConfig, id: number): GeneratedExerci
       const topLimit = r > 0 ? grid[r - 1][c] : maxH;
       const leftLimit = c > 0 ? grid[r][c - 1] : maxH;
       const upper = Math.min(topLimit, leftLimit);
-      const minVal = r === 0 && c === 0 ? Math.max(2, upper - 1) : r === 0 || c === 0 ? 1 : 0;
+      const minVal =
+        r === 0 && c === 0
+          ? Math.max(config.difficulty === "avanzado" ? 4 : 2, upper - 1)
+          : r === 0 || c === 0
+          ? config.difficulty === "avanzado"
+            ? Math.min(2, upper)
+            : 1
+          : config.difficulty === "avanzado"
+          ? Math.min(1, upper)
+          : 0;
       const h = randInt(Math.min(minVal, upper), upper);
       grid[r][c] = h;
       total += h;
@@ -798,13 +824,17 @@ function generateTriangleCount(config: WorksheetConfig, id: number): GeneratedEx
       ? randInt(2, 4)
       : config.difficulty === "medio"
       ? randInt(3, 5)
-      : randInt(4, 6);
+      : config.difficulty === "dificil"
+      ? randInt(4, 6)
+      : randInt(6, 8);
   const levels =
     config.difficulty === "facil"
       ? 1
       : config.difficulty === "medio"
       ? randInt(1, 2)
-      : randInt(2, 3);
+      : config.difficulty === "dificil"
+      ? randInt(2, 3)
+      : randInt(3, 4);
 
   const ans = levels * ((sectors * (sectors + 1)) / 2);
   return {

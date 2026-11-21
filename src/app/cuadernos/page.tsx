@@ -99,8 +99,8 @@ export default function CuadernosPage() {
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
               Nivel de dificultad
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["facil", "medio", "dificil"] as DifficultyLevel[]).map((lvl) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {(["facil", "medio", "dificil", "avanzado"] as DifficultyLevel[]).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
@@ -111,7 +111,13 @@ export default function CuadernosPage() {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {lvl === "facil" ? "Fácil" : lvl === "medio" ? "Medio" : "Difícil"}
+                  {lvl === "facil"
+                    ? "Fácil"
+                    : lvl === "medio"
+                    ? "Medio"
+                    : lvl === "dificil"
+                    ? "Difícil"
+                    : "Avanzado"}
                 </button>
               ))}
             </div>
