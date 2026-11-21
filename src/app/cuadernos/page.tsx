@@ -13,6 +13,7 @@ export default function CuadernosPage() {
   const [pagesCount, setPagesCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("medio");
   const [includeAnswers, setIncludeAnswers] = useState<boolean>(true);
+  const [showGrid, setShowGrid] = useState<boolean>(true);
   const [studentName, setStudentName] = useState<string>("");
 
   const topic = TOPICS.find((t) => t.slug === selectedSlug) ?? TOPICS[0];
@@ -26,6 +27,7 @@ export default function CuadernosPage() {
       ...topic.defaultConfig,
       difficulty,
       includeAnswers,
+      showGrid,
     };
 
     const baseSeed = Date.now() % 100000;
@@ -130,15 +132,27 @@ export default function CuadernosPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-5">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
-            <input
-              type="checkbox"
-              checked={includeAnswers}
-              onChange={(e) => setIncludeAnswers(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600"
-            />
-            Incluir {pagesCount} páginas de solucionario al final
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={includeAnswers}
+                onChange={(e) => setIncludeAnswers(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+              Incluir solucionario al final
+            </label>
+
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={showGrid}
+                onChange={(e) => setShowGrid(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+              />
+              Cuadrícula para resolver
+            </label>
+          </div>
 
           <button
             type="button"

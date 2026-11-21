@@ -15,7 +15,7 @@ function drawHeader(
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
-  doc.text("FICHASMATES.ES", 36, 16.8, { align: "center" });
+  doc.text("FICHASMATEMÁTICAS", 36, 16.8, { align: "center" });
 
   if (pageLabel) {
     doc.setTextColor(100, 116, 139);
@@ -66,6 +66,82 @@ function drawFooter(doc: jsPDF) {
   );
 }
 
+function drawMathGrid(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  step = 5
+) {
+  const cols = Math.floor(w / step);
+  const rows = Math.floor(h / step);
+  const gridW = cols * step;
+  const gridH = rows * step;
+
+  doc.setDrawColor(219, 228, 240); // soft slate/blue grid
+  doc.setLineWidth(0.2);
+
+  for (let c = 0; c <= cols; c++) {
+    const gx = x + c * step;
+    doc.line(gx, y, gx, y + gridH);
+  }
+  for (let r = 0; r <= rows; r++) {
+    const gy = y + r * step;
+    doc.line(x, gy, x + gridW, gy);
+  }
+
+  // Subtle outer border
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.3);
+  doc.rect(x, y, gridW, gridH);
+}
+
+function getGridLayout(config: WorksheetConfig) {
+  const isVertical =
+    config.layout === "vertical" &&
+    (config.kind === "addition" ||
+      config.kind === "subtraction" ||
+      config.kind === "multiplication" ||
+      config.kind === "division");
+
+  if (isVertical && config.kind === "division") {
+    // Generous 2-column layout with 4 rows max per page = 8 divisions/page
+    return { isVertical, cols: 2, maxPerPage: 8, minCellH: 56 };
+  }
+
+  if (isVertical && config.kind === "multiplication" && config.digitsB >= 2) {
+    // 2+ digit multiplication needs extra room for partial products
+    return { isVertical, cols: 3, maxPerPage: 12, minCellH: 54 };
+  }
+
+  if (isVertical) {
+    const cols = config.count <= 12 ? 3 : 4;
+    return { isVertical, cols, maxPerPage: 24, minCellH: 38 };
+  }
+
+  if (config.kind === "sequence") {
+    return { isVertical, cols: 2, maxPerPage: 16, minCellH: 28 };
+  }
+
+  if (config.kind === "fractions" || config.kind === "roman") {
+    return { isVertical, cols: 2, maxPerPage: 20, minCellH: 26 };
+  }
+
+  return { isVertical, cols: 3, maxPerPage: 30, minCellH: 24 };
+}
+
+function chunkExercises(
+  exercises: GeneratedExercise[],
+  maxPerPage: number
+): GeneratedExercise[][] {
+  const chunks: GeneratedExercise[][] = [];
+  for (let i = 0; i < exercises.length; i += maxPerPage) {
+    chunks.push(exercises.slice(i, i + maxPerPage));
+  }
+  return chunks;
+}
+
 function drawExercisesOnPage(
   doc: jsPDF,
   exercises: GeneratedExercise[],
@@ -75,31 +151,15 @@ function drawExercisesOnPage(
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 14;
   const usableW = pageWidth - marginX * 2;
-  const startY = 48;
+  const startY = 46;
   const bottomY = 276;
 
-  const isVertical =
-    config.layout === "vertical" &&
-    (config.kind === "addition" ||
-      config.kind === "subtraction" ||
-      config.kind === "multiplication" ||
-      config.kind === "division");
-
-  const cols =
-    config.kind === "sequence"
-      ? 2
-      : isVertical
-      ? config.count <= 12
-        ? 3
-        : 4
-      : config.kind === "fractions" || config.kind === "roman"
-      ? 2
-      : 3;
-
+  const { isVertical, cols, minCellH } = getGridLayout(config);
   const rows = Math.ceil(exercises.length / cols);
   const cellW = usableW / cols;
-  const cellH = Math.min(46, (bottomY - startY) / Math.max(rows, 1));
+  const cellH = Math.max(minCellH, Math.min(60, (bottomY - startY) / Math.max(rows, 1)));
   const baseFont = config.fontSize === "grande" ? 15 : 13;
+  const useGrid = Boolean(config.showGrid);
 
   exercises.forEach((ex, index) => {
     const col = index % cols;
@@ -113,30 +173,41 @@ function drawExercisesOnPage(
     doc.setTextColor(148, 163, 184);
     doc.text(`${ex.id})`, x + 2, y + 4);
 
+    if (useGrid) {
+      if (isVertical && ex.kind === "division") {
+        drawMathGrid(doc, x + 8, y + 3, cellW - 14, cellH - 8, 5);
+      } else if (isVertical) {
+        drawMathGrid(doc, x + 8, y + 3, cellW - 14, cellH - 7, 5);
+      } else {
+        drawMathGrid(doc, x + 8, y + 14, cellW - 14, Math.max(15, cellH - 18), 5);
+      }
+    }
+
     doc.setTextColor(15, 23, 42);
     doc.setFont("courier", "bold");
     doc.setFontSize(baseFont);
 
     if (isVertical && ex.kind === "division") {
-      // Draw Spanish division box: Dividend | Divisor
+      // Draw Spanish division box: Dividend | Divisor with generous room below & right
       const cx = x + 12;
-      const cy = y + 12;
+      const cy = y + 11;
       const aStr = String(ex.a ?? "");
       const bStr = String(ex.b ?? "");
       doc.text(aStr, cx, cy);
       const aWidth = doc.getTextWidth(aStr);
       const boxX = cx + aWidth + 3;
-      doc.setDrawColor(51, 65, 85);
-      doc.setLineWidth(0.45);
+      const boxW = Math.max(14, doc.getTextWidth(bStr) + 6);
+      doc.setDrawColor(30, 41, 59);
+      doc.setLineWidth(0.5);
       doc.line(boxX, cy - 5, boxX, cy + 2);
-      doc.line(boxX, cy + 2, boxX + Math.max(12, doc.getTextWidth(bStr) + 4), cy + 2);
-      doc.text(bStr, boxX + 2, cy);
+      doc.line(boxX, cy + 2, boxX + boxW, cy + 2);
+      doc.text(bStr, boxX + 2.5, cy);
 
       if (showAnswers) {
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
+        doc.setFontSize(10.5);
         doc.setTextColor(22, 163, 74);
-        doc.text(`C: ${ex.answer}`, boxX + 2, cy + 7.5);
+        doc.text(`C: ${ex.answer}`, boxX + 2, cy + 8);
       }
     } else if (isVertical) {
       const rightX = x + cellW - 10;
@@ -148,7 +219,8 @@ function drawExercisesOnPage(
       });
       doc.setDrawColor(30, 41, 59);
       doc.setLineWidth(0.5);
-      const lineLen = Math.max(doc.getTextWidth(aStr), doc.getTextWidth(bStr) + 8) + 4;
+      const lineLen =
+        Math.max(doc.getTextWidth(aStr), doc.getTextWidth(bStr) + 8) + 4;
       doc.line(rightX - lineLen, y + 19.5, rightX, y + 19.5);
 
       if (showAnswers) {
@@ -157,7 +229,7 @@ function drawExercisesOnPage(
       }
     } else if (ex.kind === "fractions" && ex.fracA && ex.fracB) {
       const fx = x + 12;
-      const fy = y + 9;
+      const fy = y + 7;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       // Frac A
@@ -187,7 +259,7 @@ function drawExercisesOnPage(
       doc.setFont("helvetica", "bold");
       doc.setFontSize(baseFont);
       const cx = x + 11;
-      const cy = y + 12;
+      const cy = y + 10;
       const aStr = String(ex.a ?? "");
       doc.text(aStr, cx, cy);
       const boxX = cx + doc.getTextWidth(aStr) + 3;
@@ -205,37 +277,41 @@ function drawExercisesOnPage(
       const seqStr = ex.sequence
         .map((n) => (n === null ? "____" : String(n)))
         .join(" ,  ");
-      doc.text(seqStr, x + 10, y + 11);
+      doc.text(seqStr, x + 10, y + 10);
       if (showAnswers) {
         doc.setFontSize(10);
         doc.setTextColor(22, 163, 74);
-        doc.text(`Sol: ${ex.answer}`, x + 10, y + 18);
+        doc.text(`Sol: ${ex.answer}`, x + 10, y + 17);
       }
     } else if (ex.kind === "roman") {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12.5);
-      doc.text(ex.romanPrompt ?? "", x + 11, y + 12);
+      doc.text(ex.romanPrompt ?? "", x + 11, y + 10);
       if (showAnswers) {
         doc.setTextColor(22, 163, 74);
-        doc.text(ex.answer, x + 11 + doc.getTextWidth(ex.romanPrompt ?? "") + 3, y + 12);
+        doc.text(
+          ex.answer,
+          x + 11 + doc.getTextWidth(ex.romanPrompt ?? "") + 3,
+          y + 10
+        );
       } else {
         doc.setDrawColor(148, 163, 184);
         const px = x + 11 + doc.getTextWidth(ex.romanPrompt ?? "") + 3;
-        doc.line(px, y + 12.5, px + 22, y + 12.5);
+        doc.line(px, y + 10.5, px + 22, y + 10.5);
       }
     } else {
       // Horizontal standard / mental
       doc.setFont("helvetica", "bold");
       doc.setFontSize(baseFont - 1);
       const prompt = `${ex.a} ${ex.operator} ${ex.b} =`;
-      doc.text(prompt, x + 10, y + 12);
+      doc.text(prompt, x + 10, y + 10);
       if (showAnswers) {
         doc.setTextColor(22, 163, 74);
-        doc.text(ex.answer, x + 10 + doc.getTextWidth(prompt) + 3, y + 12);
+        doc.text(ex.answer, x + 10 + doc.getTextWidth(prompt) + 3, y + 10);
       } else {
         doc.setDrawColor(148, 163, 184);
         const px = x + 10 + doc.getTextWidth(prompt) + 2;
-        doc.line(px, y + 12.5, px + 16, y + 12.5);
+        doc.line(px, y + 10.5, px + 16, y + 10.5);
       }
     }
   });
@@ -246,15 +322,37 @@ export function exportWorksheetPdf(
   config: WorksheetConfig
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  drawHeader(doc, config.title, config, "Ficha de ejercicios");
-  drawExercisesOnPage(doc, exercises, config, false);
-  drawFooter(doc);
+  const { maxPerPage } = getGridLayout(config);
+  const chunks = chunkExercises(exercises, maxPerPage);
+
+  chunks.forEach((chunk, idx) => {
+    if (idx > 0) doc.addPage();
+    drawHeader(
+      doc,
+      config.title,
+      config,
+      chunks.length > 1
+        ? `Ficha de ejercicios (${idx + 1}/${chunks.length})`
+        : "Ficha de ejercicios"
+    );
+    drawExercisesOnPage(doc, chunk, config, false);
+    drawFooter(doc);
+  });
 
   if (config.includeAnswers) {
-    doc.addPage();
-    drawHeader(doc, `${config.title} — Solucionario`, config, "Hoja de respuestas");
-    drawExercisesOnPage(doc, exercises, config, true);
-    drawFooter(doc);
+    chunks.forEach((chunk, idx) => {
+      doc.addPage();
+      drawHeader(
+        doc,
+        `${config.title} — Solucionario`,
+        config,
+        chunks.length > 1
+          ? `Hoja de respuestas (${idx + 1}/${chunks.length})`
+          : "Hoja de respuestas"
+      );
+      drawExercisesOnPage(doc, chunk, config, true);
+      drawFooter(doc);
+    });
   }
 
   const safeSlug = config.topicSlug.replace(/[^a-z0-9-]/gi, "-");
@@ -266,29 +364,31 @@ export function exportWorkbookPdf(
   config: WorksheetConfig
 ) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const { maxPerPage } = getGridLayout(config);
+  const allChunks = pages.flatMap((page) => chunkExercises(page, maxPerPage));
 
-  pages.forEach((exercises, idx) => {
+  allChunks.forEach((chunk, idx) => {
     if (idx > 0) doc.addPage();
     drawHeader(
       doc,
       `${config.title} (Página ${idx + 1})`,
       config,
-      `Cuaderno · ${idx + 1}/${pages.length}`
+      `Cuaderno · ${idx + 1}/${allChunks.length}`
     );
-    drawExercisesOnPage(doc, exercises, config, false);
+    drawExercisesOnPage(doc, chunk, config, false);
     drawFooter(doc);
   });
 
   if (config.includeAnswers) {
-    pages.forEach((exercises, idx) => {
+    allChunks.forEach((chunk, idx) => {
       doc.addPage();
       drawHeader(
         doc,
         `Solucionario — ${config.title} (Página ${idx + 1})`,
         config,
-        `Respuestas · ${idx + 1}/${pages.length}`
+        `Respuestas · ${idx + 1}/${allChunks.length}`
       );
-      drawExercisesOnPage(doc, exercises, config, true);
+      drawExercisesOnPage(doc, chunk, config, true);
       drawFooter(doc);
     });
   }

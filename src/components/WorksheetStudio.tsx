@@ -33,6 +33,7 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
     title: topic.name,
     studentName: "",
     showDateLine: true,
+    showGrid: topic.defaultConfig.kind === "division",
     ...topic.defaultConfig,
   }));
 
@@ -481,7 +482,9 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
           {/* Sheet Exercises Grid */}
           <div
             className={`mt-8 grid gap-x-6 gap-y-8 ${
-              config.kind === "sequence"
+              isVertical && config.kind === "division"
+                ? "grid-cols-1 sm:grid-cols-2"
+                : config.kind === "sequence"
                 ? "grid-cols-1 sm:grid-cols-2"
                 : isVertical
                 ? config.count <= 12
@@ -492,8 +495,22 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                 : "grid-cols-1 sm:grid-cols-3"
             }`}
           >
-            {exercises.map((ex) => (
-              <div key={ex.id} className="relative flex flex-col">
+            {exercises.map((ex) => {
+              const gridBgClass = config.showGrid
+                ? "rounded-lg border border-slate-200 bg-[linear-gradient(to_right,#dbe4f0_1px,transparent_1px),linear-gradient(to_bottom,#dbe4f0_1px,transparent_1px)] bg-[size:20px_20px] p-3"
+                : "";
+              const divisionSpaceClass =
+                isVertical && ex.kind === "division" ? "min-h-[165px]" : "";
+              const verticalSpaceClass =
+                isVertical && ex.kind === "multiplication" && config.digitsB >= 2
+                  ? "min-h-[140px]"
+                  : "";
+
+              return (
+              <div
+                key={ex.id}
+                className={`relative flex flex-col ${gridBgClass} ${divisionSpaceClass} ${verticalSpaceClass}`}
+              >
                 <span className="mb-1 text-xs font-bold text-slate-400">
                   {ex.id})
                 </span>
@@ -620,7 +637,8 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-10 border-t border-slate-100 pt-4 text-center text-xs text-slate-400">

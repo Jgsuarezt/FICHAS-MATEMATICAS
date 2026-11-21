@@ -23,6 +23,7 @@ export interface WorksheetConfig {
   digitsA: number; // 1..4
   digitsB: number; // 1..3
   includeAnswers: boolean;
+  showGrid?: boolean;
   studentName: string;
   showDateLine: boolean;
   fontSize: "normal" | "grande";
