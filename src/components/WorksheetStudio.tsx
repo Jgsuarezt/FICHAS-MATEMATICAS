@@ -27,6 +27,82 @@ interface WorksheetStudioProps {
   topic: TopicDefinition;
 }
 
+function BalanceScaleSvg({
+  balance,
+}: {
+  balance: { leftX: number; leftConst: number; rightX: number; rightConst: number };
+}) {
+  const renderPanItems = (
+    panCenterX: number,
+    xCount: number,
+    cVal: number
+  ) => {
+    const items: { label: string; isX: boolean }[] = [];
+    for (let k = 0; k < xCount; k++) items.push({ label: "x", isX: true });
+    if (cVal > 0) items.push({ label: String(cVal), isX: false });
+
+    const boxW = 28;
+    const gap = 4;
+    const totalW = items.length * boxW + Math.max(0, items.length - 1) * gap;
+    const startX = panCenterX - totalW / 2;
+
+    return items.map((item, idx) => {
+      const rx = startX + idx * (boxW + gap);
+      return (
+        <g key={idx}>
+          <rect
+            x={rx}
+            y={18}
+            width={boxW}
+            height={28}
+            rx={5}
+            fill={item.isX ? "#dbeafe" : "#f1f5f9"}
+            stroke={item.isX ? "#2563eb" : "#475569"}
+            strokeWidth={1.8}
+          />
+          <text
+            x={rx + boxW / 2}
+            y={37}
+            textAnchor="middle"
+            fontSize={14}
+            fontWeight="bold"
+            fontFamily="monospace"
+            fill={item.isX ? "#1d4ed8" : "#0f172a"}
+          >
+            {item.label}
+          </text>
+        </g>
+      );
+    });
+  };
+
+  return (
+    <svg
+      viewBox="0 0 280 96"
+      className="w-full max-w-[280px] select-none"
+      role="img"
+      aria-label="Balanza en equilibrio"
+    >
+      {/* Left pan */}
+      <line x1={26} y1={50} x2={114} y2={50} stroke="#334155" strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={70} y1={50} x2={70} y2={62} stroke="#334155" strokeWidth={2.5} />
+      {renderPanItems(70, balance.leftX, balance.leftConst)}
+
+      {/* Right pan */}
+      <line x1={166} y1={50} x2={254} y2={50} stroke="#334155" strokeWidth={2.5} strokeLinecap="round" />
+      <line x1={210} y1={50} x2={210} y2={62} stroke="#334155" strokeWidth={2.5} />
+      {renderPanItems(210, balance.rightX, balance.rightConst)}
+
+      {/* Beam */}
+      <line x1={70} y1={62} x2={210} y2={62} stroke="#334155" strokeWidth={3} strokeLinecap="round" />
+
+      {/* Fulcrum */}
+      <polygon points="140,62 126,88 154,88" fill="#64748b" />
+      <line x1={116} y1={88} x2={164} y2={88} stroke="#475569" strokeWidth={3} strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
   const [config, setConfig] = useState<WorksheetConfig>(() => ({
     topicSlug: topic.slug,
@@ -484,7 +560,8 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             className={`mt-8 grid gap-x-6 gap-y-8 ${
               isVertical && config.kind === "division"
                 ? "grid-cols-1 sm:grid-cols-2"
-                : config.kind === "sequence" ||
+                : config.kind === "balance" ||
+                  config.kind === "sequence" ||
                   config.kind === "fractions" ||
                   config.kind === "roman" ||
                   config.kind === "neighbors" ||
@@ -501,9 +578,10 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             }`}
           >
             {exercises.map((ex) => {
-              const gridBgClass = config.showGrid
-                ? "rounded-lg border border-slate-200 bg-[linear-gradient(to_right,#dbe4f0_1px,transparent_1px),linear-gradient(to_bottom,#dbe4f0_1px,transparent_1px)] bg-[size:20px_20px] p-3"
-                : "";
+              const gridBgClass =
+                config.showGrid && ex.kind !== "balance"
+                  ? "rounded-lg border border-slate-200 bg-[linear-gradient(to_right,#dbe4f0_1px,transparent_1px),linear-gradient(to_bottom,#dbe4f0_1px,transparent_1px)] bg-[size:20px_20px] p-3"
+                  : "";
               const divisionSpaceClass =
                 isVertical && ex.kind === "division" ? "min-h-[165px]" : "";
               const verticalSpaceClass =
@@ -654,6 +732,18 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       )
                     )}
                   </div>
+                ) : ex.kind === "balance" && ex.balance ? (
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/40 p-3">
+                    <BalanceScaleSvg balance={ex.balance} />
+                    <div className="flex items-center gap-2 font-mono text-base font-bold text-slate-900">
+                      <span>x =</span>
+                      {showAnswersOnScreen ? (
+                        <span className="text-emerald-600">{ex.answer}</span>
+                      ) : (
+                        <span className="inline-block w-14 border-b-2 border-slate-400" />
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <div
                     className={`flex items-center gap-2 font-mono font-bold text-slate-900 ${
@@ -701,7 +791,13 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={`mt-6 grid grid-cols-1 gap-4 ${
+              config.kind === "balance"
+                ? "sm:grid-cols-2"
+                : "sm:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {exercises.map((ex) => {
               const correct = checked ? isExerciseCorrect(ex) : null;
               return (
@@ -727,9 +823,17 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       ))}
                   </div>
 
+                  {ex.kind === "balance" && ex.balance && (
+                    <div className="mt-2 flex justify-center">
+                      <BalanceScaleSvg balance={ex.balance} />
+                    </div>
+                  )}
+
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <div className="font-mono text-base font-bold text-slate-900">
-                      {ex.kind === "fractions" && ex.fracA && ex.fracB
+                      {ex.kind === "balance"
+                        ? "x ="
+                        : ex.kind === "fractions" && ex.fracA && ex.fracB
                         ? `${ex.fracA.num}/${ex.fracA.den} ${ex.operator} ${ex.fracB.num}/${ex.fracB.den} =`
                         : ex.kind === "comparison"
                         ? `${ex.a} [ ? ] ${ex.b}`

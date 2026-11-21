@@ -481,6 +481,47 @@ function generateCombined(config: WorksheetConfig, id: number): GeneratedExercis
   };
 }
 
+function generateBalance(config: WorksheetConfig, id: number): GeneratedExercise {
+  const x = randInt(2, config.difficulty === "facil" ? 12 : 15);
+
+  if (config.difficulty === "facil") {
+    // x + c = total
+    const leftConst = randInt(2, 15);
+    const rightConst = x + leftConst;
+    return {
+      id,
+      kind: "balance",
+      balance: { leftX: 1, leftConst, rightX: 0, rightConst },
+      answer: String(x),
+    };
+  }
+
+  if (config.difficulty === "medio") {
+    // 2x + c = total or 3x + c = total
+    const leftX = randInt(2, 3);
+    const leftConst = randInt(1, 12);
+    const rightConst = leftX * x + leftConst;
+    return {
+      id,
+      kind: "balance",
+      balance: { leftX, leftConst, rightX: 0, rightConst },
+      answer: String(x),
+    };
+  }
+
+  // dificil: 2x + c = x + d  or  3x + c = x + d
+  const rightX = 1;
+  const leftX = randInt(2, 3);
+  const leftConst = randInt(1, 10);
+  const rightConst = (leftX - rightX) * x + leftConst;
+  return {
+    id,
+    kind: "balance",
+    balance: { leftX, leftConst, rightX, rightConst },
+    answer: String(x),
+  };
+}
+
 export function generateWorksheet(
   config: WorksheetConfig,
   seed = 1
@@ -536,13 +577,16 @@ export function generateWorksheet(
         case "combined":
           candidate = generateCombined(config, i);
           break;
+        case "balance":
+          candidate = generateBalance(config, i);
+          break;
         case "mental":
         default:
           candidate = generateMental(config, i);
           break;
       }
 
-      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
+      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
       if (!seen.has(key) || retry === 14) {
         seen.add(key);
         ex = candidate;

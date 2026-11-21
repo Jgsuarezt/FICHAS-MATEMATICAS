@@ -13,7 +13,8 @@ export type ExerciseKind =
   | "decimals"
   | "ruleOfThree"
   | "mcmMcd"
-  | "combined";
+  | "combined"
+  | "balance";
 
 export type DifficultyLevel = "facil" | "medio" | "dificil";
 
@@ -55,6 +56,13 @@ export interface GeneratedExercise {
   // For roman or text-based prompts (neighbors, placeValue, ruleOfThree, mcmMcd, combined)
   romanPrompt?: string;
   promptText?: string;
+  // For balance scale equations
+  balance?: {
+    leftX: number;
+    leftConst: number;
+    rightX: number;
+    rightConst: number;
+  };
   // Answer representation
   answer: string;
   // Optional extra note (e.g., remainder)

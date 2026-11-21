@@ -922,6 +922,48 @@ export const TOPICS: TopicDefinition[] = [
       ],
     },
   },
+  {
+    slug: "ecuaciones-balanza",
+    name: "Ecuaciones con balanza",
+    shortName: "Ecuaciones con balanza",
+    category: "Tablas y Cálculo",
+    grades: ["4-primaria", "5-primaria", "6-primaria"],
+    badge: "Visual",
+    description:
+      "Iniciación visual al álgebra mediante balanzas en equilibrio. Descubre cuánto vale la incógnita x en cada platillo.",
+    seoTitle: "Fichas de Ecuaciones con Balanza en PDF Gratis + Solucionario",
+    seoDescription:
+      "Genera fichas visuales de ecuaciones con balanza en equilibrio para Primaria en PDF gratis con solucionario.",
+    defaultConfig: {
+      kind: "balance",
+      difficulty: "facil",
+      count: 12,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "La balanza en equilibrio es la mejor metáfora visual para entender qué es una ecuación de primer grado: si quitamos o sumamos lo mismo en ambos platillos, la balanza sigue equilibrada.",
+      howToTeach: [
+        "Nivel Fácil: una sola caja 'x' acompañada de un peso conocido (ej. x + 5 = 12).",
+        "Nivel Medio: varias cajas 'x' iguales en el platillo izquierdo (ej. 2x + 3 = 13).",
+        "Nivel Difícil: incógnitas 'x' en ambos platillos para tachar una 'x' de cada lado primero.",
+      ],
+      tips: [
+        "Anima al alumno a tachar visualmente los pesos iguales en ambos platillos antes de calcular.",
+      ],
+      faqs: [
+        {
+          q: "¿Qué valor tiene x en las fichas?",
+          a: "Siempre es un número entero positivo sencillo (entre 2 y 15) para facilitar el razonamiento.",
+        },
+      ],
+    },
+  },
 ];
 
 export function getTopicBySlug(slug: string): TopicDefinition | undefined {

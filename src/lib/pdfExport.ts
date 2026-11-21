@@ -120,6 +120,10 @@ function getGridLayout(config: WorksheetConfig) {
     return { isVertical, cols, maxPerPage: 24, minCellH: 38 };
   }
 
+  if (config.kind === "balance") {
+    return { isVertical, cols: 2, maxPerPage: 8, minCellH: 54 };
+  }
+
   if (config.kind === "sequence") {
     return { isVertical, cols: 2, maxPerPage: 16, minCellH: 28 };
   }
@@ -182,7 +186,7 @@ function drawExercisesOnPage(
     const badgeY = isVertical && ex.kind === "division" ? y + 7.5 : y + 5;
     doc.text(`${ex.id})`, x + 1.5, badgeY);
 
-    if (useGrid) {
+    if (useGrid && ex.kind !== "balance") {
       if (isVertical && ex.kind === "division") {
         drawMathGrid(doc, x + 9, y + 2, cellW - 15, cellH - 7, 5);
       } else if (isVertical) {
@@ -329,6 +333,79 @@ function drawExercisesOnPage(
         doc.setDrawColor(148, 163, 184);
         const px = x + 10 + doc.getTextWidth(ex.promptText) + 2;
         doc.line(px, y + 10.5, px + 18, y + 10.5);
+      }
+    } else if (ex.kind === "balance" && ex.balance) {
+      const { leftX, leftConst, rightX, rightConst } = ex.balance;
+      const centerX = x + cellW / 2;
+      const beamY = y + 23;
+
+      // Helper to draw weights on a pan
+      const drawPan = (panCenterX: number, xCount: number, cVal: number) => {
+        // Pan base line
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.6);
+        doc.line(panCenterX - 18, beamY, panCenterX + 18, beamY);
+        doc.line(panCenterX, beamY, panCenterX, beamY + 4);
+
+        const items: { label: string; isX: boolean }[] = [];
+        for (let k = 0; k < xCount; k++) items.push({ label: "x", isX: true });
+        if (cVal > 0) items.push({ label: String(cVal), isX: false });
+
+        const boxW = 7.5;
+        const gap = 1.5;
+        const totalW = items.length * boxW + (items.length - 1) * gap;
+        let curX = panCenterX - totalW / 2;
+
+        items.forEach((item) => {
+          if (item.isX) {
+            doc.setFillColor(219, 234, 254); // blue-100
+            doc.setDrawColor(37, 99, 235); // blue-600
+          } else {
+            doc.setFillColor(241, 245, 249); // slate-100
+            doc.setDrawColor(71, 85, 105); // slate-600
+          }
+          doc.setLineWidth(0.4);
+          doc.roundedRect(curX, beamY - 9, boxW, 8.5, 1, 1, "FD");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9.5);
+          doc.setTextColor(item.isX ? 29 : 15, item.isX ? 78 : 23, item.isX ? 216 : 42);
+          doc.text(item.label, curX + boxW / 2, beamY - 3.3, { align: "center" });
+          curX += boxW + gap;
+        });
+      };
+
+      // Beam & Fulcrum
+      const leftPanX = centerX - 24;
+      const rightPanX = centerX + 24;
+      doc.setDrawColor(51, 65, 85);
+      doc.setLineWidth(0.7);
+      doc.line(leftPanX, beamY + 4, rightPanX, beamY + 4);
+      doc.setFillColor(100, 116, 139);
+      doc.triangle(
+        centerX,
+        beamY + 4,
+        centerX - 4.5,
+        beamY + 12,
+        centerX + 4.5,
+        beamY + 12,
+        "FD"
+      );
+
+      drawPan(leftPanX, leftX, leftConst);
+      drawPan(rightPanX, rightX, rightConst);
+
+      // Answer line
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      const ansY = beamY + 21;
+      doc.text("x =", centerX - 8, ansY);
+      if (showAnswers) {
+        doc.setTextColor(22, 163, 74);
+        doc.text(ex.answer, centerX + 1, ansY);
+      } else {
+        doc.setDrawColor(148, 163, 184);
+        doc.line(centerX, ansY + 0.5, centerX + 14, ansY + 0.5);
       }
     } else {
       // Horizontal standard / mental
