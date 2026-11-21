@@ -964,6 +964,52 @@ export const TOPICS: TopicDefinition[] = [
       ],
     },
   },
+  {
+    slug: "olimpiadas-omec",
+    name: "Olimpiadas OMEC (Razonamiento)",
+    shortName: "Olimpiadas OMEC",
+    category: "Tablas y Cálculo",
+    grades: ["5-primaria", "6-primaria"],
+    badge: "Olimpiada",
+    description:
+      "Problemas de razonamiento lógico, geometría, conteo y aritmética tipo Olimpiada Nacional de Matemáticas (OMEC) con 5 opciones (A-E) y solucionario.",
+    seoTitle: "Fichas Olimpiadas OMEC de Matemáticas en PDF Gratis + Respuestas",
+    seoDescription:
+      "Practica con fichas de entrenamiento estilo Olimpiadas OMEC (Nivel 1 y 2) en PDF gratis o modo interactivo con opciones A-E y solucionario.",
+    defaultConfig: {
+      kind: "olympiad",
+      difficulty: "facil",
+      count: 12,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Las fichas estilo Olimpiadas OMEC entrenan el pensamiento lógico-matemático, la lectura comprensiva de enunciados y la resolución de problemas de opción múltiple (A, B, C, D, E) sin depender de fórmulas memorizadas.",
+      howToTeach: [
+        "Lee el enunciado despacio y subraya los datos numéricos clave.",
+        "Dibuja un esquema rápido (segmentos, rectángulos o baldosas) antes de calcular.",
+        "Descarta opciones imposibles y comprueba tu resultado final.",
+      ],
+      tips: [
+        "Usa el Modo Interactivo para entrenar como en un examen real de Primera Fase OMEC.",
+      ],
+      faqs: [
+        {
+          q: "¿Cada ficha genera problemas diferentes?",
+          a: "Sí, los nombres, medidas, precios y cantidades cambian automáticamente en cada ficha nueva.",
+        },
+        {
+          q: "¿Incluye las letras correctas en el solucionario?",
+          a: "Sí, tanto en pantalla como en la página de Solucionario del PDF se muestra la letra correcta (A-E) y el valor.",
+        },
+      ],
+    },
+  },
 ];
 
 export function getTopicBySlug(slug: string): TopicDefinition | undefined {

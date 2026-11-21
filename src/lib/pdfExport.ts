@@ -120,6 +120,10 @@ function getGridLayout(config: WorksheetConfig) {
     return { isVertical, cols, maxPerPage: 24, minCellH: 38 };
   }
 
+  if (config.kind === "olympiad") {
+    return { isVertical: false, cols: 1, maxPerPage: 5, minCellH: 43 };
+  }
+
   if (config.kind === "balance") {
     return { isVertical, cols: 2, maxPerPage: 8, minCellH: 54 };
   }
@@ -186,7 +190,7 @@ function drawExercisesOnPage(
     const badgeY = isVertical && ex.kind === "division" ? y + 7.5 : y + 5;
     doc.text(`${ex.id})`, x + 1.5, badgeY);
 
-    if (useGrid && ex.kind !== "balance") {
+    if (useGrid && ex.kind !== "balance" && ex.kind !== "olympiad") {
       if (isVertical && ex.kind === "division") {
         drawMathGrid(doc, x + 9, y + 2, cellW - 15, cellH - 7, 5);
       } else if (isVertical) {
@@ -406,6 +410,34 @@ function drawExercisesOnPage(
       } else {
         doc.setDrawColor(148, 163, 184);
         doc.line(centerX, ansY + 0.5, centerX + 14, ansY + 0.5);
+      }
+    } else if (ex.kind === "olympiad" && ex.olympiad) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42);
+      const wrapped = doc.splitTextToSize(ex.olympiad.question, cellW - 14);
+      doc.text(wrapped, x + 10, y + 5.5);
+
+      const optsY = y + 5.5 + wrapped.length * 4.8 + 3;
+      const optStep = (cellW - 14) / 5;
+      ex.olympiad.options.forEach((opt, idx) => {
+        const isCorrect = opt.label === ex.olympiad?.correctLabel;
+        if (showAnswers && isCorrect) {
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(22, 163, 74);
+        } else {
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(51, 65, 85);
+        }
+        doc.setFontSize(10);
+        doc.text(`${opt.label}) ${opt.value}`, x + 10 + idx * optStep, optsY);
+      });
+
+      if (showAnswers) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(22, 163, 74);
+        doc.text(`Respuesta: ${ex.answer}`, x + 10, optsY + 6);
       }
     } else {
       // Horizontal standard / mental

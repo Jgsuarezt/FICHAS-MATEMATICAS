@@ -522,6 +522,198 @@ function generateBalance(config: WorksheetConfig, id: number): GeneratedExercise
   };
 }
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(activeRng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function buildOlympiadOptions(
+  correctVal: string,
+  distractors: string[]
+): { options: { label: string; value: string }[]; correctLabel: string } {
+  const unique = [correctVal];
+  for (const d of distractors) {
+    if (!unique.includes(d) && unique.length < 5) unique.push(d);
+  }
+  let fallback = 1;
+  while (unique.length < 5) {
+    const cand = String(fallback++);
+    if (!unique.includes(cand)) unique.push(cand);
+  }
+  const shuffled = shuffleArray(unique);
+  const labels = ["A", "B", "C", "D", "E"];
+  const options = shuffled.map((val, idx) => ({ label: labels[idx], value: val }));
+  const correctLabel = options.find((o) => o.value === correctVal)?.label ?? "A";
+  return { options, correctLabel };
+}
+
+function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercise {
+  const templatePool =
+    config.difficulty === "facil"
+      ? [0, 1, 2, 3, 4]
+      : config.difficulty === "medio"
+      ? [1, 2, 3, 4, 5, 6]
+      : [0, 2, 4, 5, 6, 7];
+
+  const tpl = templatePool[(id - 1 + randInt(0, templatePool.length - 1)) % templatePool.length];
+  const namesPool = ["Adrián", "María", "Lucía", "Mateo", "Sofía", "Daniel", "Andrea", "Carlos", "Elena", "Hugo"];
+
+  let question = "";
+  let correctVal = "";
+  let distractors: string[] = [];
+
+  switch (tpl) {
+    case 0: {
+      // Ordenación lógica (estilo Problema 2 OMEC)
+      const picked = shuffleArray(namesPool).slice(0, 5);
+      const [n1, n2, n3, n4, n5] = picked;
+      const askTallest = activeRng() > 0.5;
+      question = `${n2} es más alto que ${n1}, pero más pequeño que ${n3}. ${n4} es más alto que ${n5}, pero más pequeño que ${n2}. ¿Quién es la persona más ${askTallest ? "alta" : "baja"}?`;
+      correctVal = askTallest ? n3 : n5;
+      distractors = picked.filter((n) => n !== correctVal);
+      break;
+    }
+    case 1: {
+      // Número de dos dígitos + suma (estilo Problema 3 OMEC)
+      const firstDigit = randInt(2, 7);
+      const secondDigit = randInt(1, 9);
+      const twoDigit = firstDigit * 10 + secondDigit;
+      const addend = randInt(11, 29);
+      const result = twoDigit + addend;
+      const askFirst = activeRng() > 0.4;
+      question = `Mario escribió un dígito y después escribió otro a su derecha. Luego sumó ${addend} al número de dos dígitos que formó y obtuvo ${result}. ¿Cuál es el ${askFirst ? "primer" : "segundo"} dígito que escribió?`;
+      const ansNum = askFirst ? firstDigit : secondDigit;
+      correctVal = String(ansNum);
+      distractors = [
+        String(askFirst ? secondDigit : firstDigit),
+        String(ansNum + 1),
+        String(Math.max(1, ansNum - 1)),
+        String((ansNum + 2) % 10),
+      ];
+      break;
+    }
+    case 2: {
+      // Precios y compras (estilo Problema 5 OMEC)
+      const pPaleta = randInt(3, 8) * 10; // cents: 0.30..0.80
+      const pGalleta = randInt(5, 12) * 10;
+      const nPal = randInt(2, 4);
+      const nGal = randInt(2, 4);
+      const totalPal = ((pPaleta * nPal) / 100).toFixed(2);
+      const totalGal = ((pGalleta * nGal) / 100).toFixed(2);
+      const ansCents = pPaleta + pGalleta;
+      question = `Lourdes pagó $${totalPal} por ${nPal} paletas. Matías pagó $${totalGal} por ${nGal} galletas. ¿Cuánto pagó Inés por una paleta y una galleta?`;
+      correctVal = `$${(ansCents / 100).toFixed(2)}`;
+      distractors = [
+        `$${((ansCents + 20) / 100).toFixed(2)}`,
+        `$${((ansCents - 10) / 100).toFixed(2)}`,
+        `$${((ansCents + 10) / 100).toFixed(2)}`,
+        `$${((ansCents + 30) / 100).toFixed(2)}`,
+      ];
+      break;
+    }
+    case 3: {
+      // Perímetro rectángulo -> lado del cuadrado (estilo Problema 9 OMEC)
+      const halfSum = randInt(5, 14);
+      const sideA = randInt(2, halfSum - 2);
+      const sideB = halfSum * 2 - sideA;
+      const squareSide = (sideA + sideB) / 2;
+      question = `Un rectángulo tiene lados de ${sideA} cm y ${sideB} cm. ¿Cuánto mide el lado de un cuadrado que tiene el mismo perímetro que el rectángulo?`;
+      correctVal = `${squareSide} cm`;
+      distractors = [
+        `${squareSide * 2} cm`,
+        `${squareSide + 2} cm`,
+        `${Math.max(2, squareSide - 2)} cm`,
+        `${sideA + sideB} cm`,
+      ];
+      break;
+    }
+    case 4: {
+      // Conteo de pares o impares (estilo Problema 6 OMEC)
+      const isOdd = activeRng() > 0.5;
+      const start = randInt(10, 40) * 2; // even
+      const count = randInt(18, 42);
+      const end = start + count * 2;
+      question = `Heivi escribe todos los números ${isOdd ? "impares" : "pares"} estrictamente entre ${start} y ${end}. ¿Cuántos números escribió?`;
+      const ans = isOdd ? count : count - 1;
+      correctVal = String(ans);
+      distractors = [
+        String(ans + 1),
+        String(ans - 1),
+        String(ans + 2),
+        String(count * 2),
+      ];
+      break;
+    }
+    case 5: {
+      // Segmento y fracción (estilo Problema 4 OMEC)
+      const denom = randInt(3, 5);
+      const unit = randInt(4, 12);
+      const total = denom * unit;
+      const pb = total - unit;
+      question = `Se tiene un segmento AB de ${total} cm de longitud. Entre A y B se ubica el punto P de modo que AP = 1/${denom} de AB. ¿Cuánto mide el segmento PB?`;
+      correctVal = `${pb} cm`;
+      distractors = [
+        `${unit} cm`,
+        `${pb - 2} cm`,
+        `${pb + 4} cm`,
+        `${Math.floor(total / 2)} cm`,
+      ];
+      break;
+    }
+    case 6: {
+      // Baldosas en el borde de un cuarto (estilo Problema 8 OMEC)
+      const largo = randInt(6, 14);
+      const ancho = randInt(4, largo - 1);
+      const border = 2 * largo + 2 * ancho - 4;
+      question = `El piso de un cuarto rectangular está cubierto por baldosas cuadradas. Tiene ${largo} baldosas de largo y ${ancho} de ancho. ¿Cuántas baldosas tocan las paredes del cuarto?`;
+      correctVal = String(border);
+      distractors = [
+        String(border + 4),
+        String(border + 2),
+        String(border - 2),
+        String(largo * ancho),
+      ];
+      break;
+    }
+    case 7:
+    default: {
+      // Menor entero positivo n para raíz cuadrada exacta (estilo Problema 1 OMEC)
+      const base = randInt(5, 11);
+      const sq = base * base;
+      const sumDigits = randInt(sq - 14, sq - 2);
+      const n = sq - sumDigits;
+      const a = Math.floor(sumDigits / 3);
+      const b = Math.floor((sumDigits - a) / 2);
+      const c = sumDigits - a - b;
+      question = `¿Cuál es el menor entero positivo n tal que √(${a} + ${b} + ${c} + n) sea un número entero?`;
+      correctVal = String(n);
+      distractors = [
+        String(n + 1),
+        String(Math.max(1, n - 1)),
+        String(n + 2),
+        String(base),
+      ];
+      break;
+    }
+  }
+
+  const { options, correctLabel } = buildOlympiadOptions(correctVal, distractors);
+  return {
+    id,
+    kind: "olympiad",
+    olympiad: {
+      question,
+      options,
+      correctLabel,
+    },
+    answer: `${correctLabel}) ${correctVal}`,
+  };
+}
+
 export function generateWorksheet(
   config: WorksheetConfig,
   seed = 1
@@ -580,13 +772,16 @@ export function generateWorksheet(
         case "balance":
           candidate = generateBalance(config, i);
           break;
+        case "olympiad":
+          candidate = generateOlympiad(config, i);
+          break;
         case "mental":
         default:
           candidate = generateMental(config, i);
           break;
       }
 
-      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
+      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.olympiad?.question}-${candidate.balance?.leftX}-${candidate.balance?.leftConst}-${candidate.balance?.rightConst}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
       if (!seen.has(key) || retry === 14) {
         seen.add(key);
         ex = candidate;

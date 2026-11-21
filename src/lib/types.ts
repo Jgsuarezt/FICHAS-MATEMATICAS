@@ -14,7 +14,8 @@ export type ExerciseKind =
   | "ruleOfThree"
   | "mcmMcd"
   | "combined"
-  | "balance";
+  | "balance"
+  | "olympiad";
 
 export type DifficultyLevel = "facil" | "medio" | "dificil";
 
@@ -62,6 +63,12 @@ export interface GeneratedExercise {
     leftConst: number;
     rightX: number;
     rightConst: number;
+  };
+  // For OMEC-style Olympiad multiple-choice problems
+  olympiad?: {
+    question: string;
+    options: { label: string; value: string }[];
+    correctLabel: string;
   };
   // Answer representation
   answer: string;

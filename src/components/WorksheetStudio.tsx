@@ -161,6 +161,9 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
   const isExerciseCorrect = (ex: GeneratedExercise) => {
     const raw = userInputs[ex.id] ?? "";
     if (!raw.trim()) return false;
+    if (ex.kind === "olympiad" && ex.olympiad) {
+      return raw.trim().toUpperCase() === ex.olympiad.correctLabel;
+    }
     if (ex.kind === "division") {
       // Accept just the quotient if user enters quotient, or full "Q (R r)"
       const quotientOnly = ex.answer.split(" ")[0];
@@ -558,7 +561,9 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
           {/* Sheet Exercises Grid */}
           <div
             className={`mt-8 grid gap-x-6 gap-y-8 ${
-              isVertical && config.kind === "division"
+              config.kind === "olympiad"
+                ? "grid-cols-1"
+                : isVertical && config.kind === "division"
                 ? "grid-cols-1 sm:grid-cols-2"
                 : config.kind === "balance" ||
                   config.kind === "sequence" ||
@@ -579,7 +584,7 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
           >
             {exercises.map((ex) => {
               const gridBgClass =
-                config.showGrid && ex.kind !== "balance"
+                config.showGrid && ex.kind !== "balance" && ex.kind !== "olympiad"
                   ? "rounded-lg border border-slate-200 bg-[linear-gradient(to_right,#dbe4f0_1px,transparent_1px),linear-gradient(to_bottom,#dbe4f0_1px,transparent_1px)] bg-[size:20px_20px] p-3"
                   : "";
               const divisionSpaceClass =
@@ -744,6 +749,35 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       )}
                     </div>
                   </div>
+                ) : ex.kind === "olympiad" && ex.olympiad ? (
+                  <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/40 p-4">
+                    <p
+                      className={`font-medium leading-relaxed text-slate-900 ${
+                        config.fontSize === "grande" ? "text-lg" : "text-base"
+                      }`}
+                    >
+                      {ex.olympiad.question}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      {ex.olympiad.options.map((opt) => {
+                        const isCorrect =
+                          showAnswersOnScreen &&
+                          opt.label === ex.olympiad?.correctLabel;
+                        return (
+                          <div
+                            key={opt.label}
+                            className={`rounded-lg border px-2.5 py-1.5 text-sm font-bold ${
+                              isCorrect
+                                ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-white text-slate-700"
+                            }`}
+                          >
+                            {opt.label}) {opt.value}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ) : (
                   <div
                     className={`flex items-center gap-2 font-mono font-bold text-slate-900 ${
@@ -793,7 +827,9 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
 
           <div
             className={`mt-6 grid grid-cols-1 gap-4 ${
-              config.kind === "balance"
+              config.kind === "olympiad"
+                ? "grid-cols-1"
+                : config.kind === "balance"
                 ? "sm:grid-cols-2"
                 : "sm:grid-cols-2 lg:grid-cols-3"
             }`}
@@ -813,7 +849,7 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400">
-                      Ejercicio {ex.id}
+                      Problema {ex.id}
                     </span>
                     {checked &&
                       (correct ? (
@@ -829,6 +865,37 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                     </div>
                   )}
 
+                  {ex.kind === "olympiad" && ex.olympiad ? (
+                    <div className="mt-2 space-y-3">
+                      <p className="text-sm font-medium leading-relaxed text-slate-900 sm:text-base">
+                        {ex.olympiad.question}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                        {ex.olympiad.options.map((opt) => {
+                          const selected = userInputs[ex.id] === opt.label;
+                          return (
+                            <button
+                              key={opt.label}
+                              type="button"
+                              onClick={() =>
+                                setUserInputs((prev) => ({
+                                  ...prev,
+                                  [ex.id]: opt.label,
+                                }))
+                              }
+                              className={`rounded-lg border px-3 py-2 text-left text-sm font-bold transition ${
+                                selected
+                                  ? "border-blue-600 bg-blue-600 text-white"
+                                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                              }`}
+                            >
+                              {opt.label}) {opt.value}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <div className="font-mono text-base font-bold text-slate-900">
                       {ex.kind === "balance"
@@ -886,6 +953,7 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       />
                     )}
                   </div>
+                  )}
 
                   {checked && !correct && (
                     <div className="mt-2 text-xs font-semibold text-rose-600">
