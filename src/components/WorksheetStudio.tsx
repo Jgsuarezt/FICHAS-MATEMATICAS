@@ -103,6 +103,118 @@ function BalanceScaleSvg({
   );
 }
 
+function OlympiadDiagramSvg({
+  diagram,
+}: {
+  diagram: NonNullable<GeneratedExercise["olympiad"]>["diagram"];
+}) {
+  if (!diagram) return null;
+
+  if (diagram.type === "rectTriangle") {
+    return (
+      <svg viewBox="0 0 240 110" className="mx-auto w-56 select-none" role="img" aria-label="Rectángulo con región sombreada">
+        <rect x={30} y={24} width={170} height={68} fill="#ffffff" stroke="#0f172a" strokeWidth={2} />
+        <polygon points="30,92 145,24 200,92" fill="#94a3b8" fillOpacity={0.55} stroke="#0f172a" strokeWidth={1.8} />
+        <text x={115} y={16} textAnchor="middle" fontSize={13} fontWeight="bold" fill="#0f172a">
+          {diagram.width}
+        </text>
+        <text x={16} y={62} textAnchor="middle" fontSize={13} fontWeight="bold" fill="#0f172a">
+          {diagram.height}
+        </text>
+      </svg>
+    );
+  }
+
+  if (diagram.type === "squareSemicircles") {
+    return (
+      <svg viewBox="0 0 180 140" className="mx-auto w-44 select-none" role="img" aria-label="Cuadrado ABCD con semicírculos">
+        <defs>
+          <clipPath id="sqClip">
+            <rect x={40} y={22} width={96} height={96} />
+          </clipPath>
+        </defs>
+        <rect x={40} y={22} width={96} height={96} fill="#ffffff" stroke="#0f172a" strokeWidth={2} />
+        {/* Semicircle on top AB (shaded) + semicircle on left AD (white/shaded pattern) */}
+        <path
+          d="M 40 22 A 48 48 0 0 0 136 22 Z"
+          fill="#94a3b8"
+          fillOpacity={0.55}
+          stroke="#0f172a"
+          strokeWidth={1.6}
+          clipPath="url(#sqClip)"
+        />
+        <path
+          d="M 40 22 A 48 48 0 0 1 40 118 Z"
+          fill="#94a3b8"
+          fillOpacity={0.55}
+          stroke="#0f172a"
+          strokeWidth={1.6}
+          clipPath="url(#sqClip)"
+        />
+        <line x1={40} y1={22} x2={136} y2={118} stroke="#0f172a" strokeWidth={1.2} strokeDasharray="4 3" />
+        <text x={30} y={20} fontSize={12} fontWeight="bold" fill="#0f172a">A</text>
+        <text x={140} y={20} fontSize={12} fontWeight="bold" fill="#0f172a">B</text>
+        <text x={140} y={128} fontSize={12} fontWeight="bold" fill="#0f172a">C</text>
+        <text x={30} y={128} fontSize={12} fontWeight="bold" fill="#0f172a">D</text>
+        <text x={88} y={134} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#2563eb">
+          L = {diagram.side}
+        </text>
+      </svg>
+    );
+  }
+
+  if (diagram.type === "segment") {
+    const pX = 30 + (180 / diagram.denom);
+    return (
+      <svg viewBox="0 0 240 65" className="mx-auto w-60 select-none" role="img" aria-label="Segmento AB con punto P">
+        <line x1={30} y1={28} x2={210} y2={28} stroke="#0f172a" strokeWidth={2.5} />
+        <circle cx={30} cy={28} r={3.5} fill="#0f172a" />
+        <circle cx={pX} cy={28} r={3.5} fill="#2563eb" />
+        <circle cx={210} cy={28} r={3.5} fill="#0f172a" />
+        <text x={30} y={16} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#0f172a">A</text>
+        <text x={pX} y={16} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#2563eb">P</text>
+        <text x={210} y={16} textAnchor="middle" fontSize={12} fontWeight="bold" fill="#0f172a">B</text>
+        <path d="M 30 38 L 30 44 L 210 44 L 210 38" fill="none" stroke="#64748b" strokeWidth={1.5} />
+        <text x={120} y={58} textAnchor="middle" fontSize={11} fontWeight="bold" fill="#475569">
+          {diagram.total} cm
+        </text>
+      </svg>
+    );
+  }
+
+  if (diagram.type === "tiledRoom") {
+    const cell = Math.min(18, Math.floor(160 / diagram.cols));
+    const w = diagram.cols * cell;
+    const h = diagram.rows * cell;
+    const ox = (220 - w) / 2;
+    const oy = 10;
+    return (
+      <svg viewBox={`0 0 220 ${h + 24}`} className="mx-auto w-56 select-none" role="img" aria-label="Cuarto con baldosas">
+        {Array.from({ length: diagram.rows }).map((_, r) =>
+          Array.from({ length: diagram.cols }).map((__, c) => {
+            const isBorder =
+              r === 0 || r === diagram.rows - 1 || c === 0 || c === diagram.cols - 1;
+            return (
+              <rect
+                key={`${r}-${c}`}
+                x={ox + c * cell}
+                y={oy + r * cell}
+                width={cell}
+                height={cell}
+                fill={isBorder ? "#cbd5e1" : "#ffffff"}
+                stroke="#334155"
+                strokeWidth={1.2}
+              />
+            );
+          })
+        )}
+      </svg>
+    );
+  }
+
+  return null;
+}
+
 export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
   const [config, setConfig] = useState<WorksheetConfig>(() => ({
     topicSlug: topic.slug,
@@ -758,6 +870,11 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                     >
                       {ex.olympiad.question}
                     </p>
+                    {ex.olympiad.diagram && (
+                      <div className="py-1">
+                        <OlympiadDiagramSvg diagram={ex.olympiad.diagram} />
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                       {ex.olympiad.options.map((opt) => {
                         const isCorrect =
@@ -870,6 +987,11 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       <p className="text-sm font-medium leading-relaxed text-slate-900 sm:text-base">
                         {ex.olympiad.question}
                       </p>
+                      {ex.olympiad.diagram && (
+                        <div className="py-1">
+                          <OlympiadDiagramSvg diagram={ex.olympiad.diagram} />
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                         {ex.olympiad.options.map((opt) => {
                           const selected = userInputs[ex.id] === opt.label;

@@ -69,6 +69,11 @@ export interface GeneratedExercise {
     question: string;
     options: { label: string; value: string }[];
     correctLabel: string;
+    diagram?:
+      | { type: "rectTriangle"; width: number; height: number }
+      | { type: "squareSemicircles"; side: number }
+      | { type: "segment"; total: number; denom: number }
+      | { type: "tiledRoom"; cols: number; rows: number };
   };
   // Answer representation
   answer: string;

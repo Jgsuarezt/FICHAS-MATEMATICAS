@@ -121,7 +121,7 @@ function getGridLayout(config: WorksheetConfig) {
   }
 
   if (config.kind === "olympiad") {
-    return { isVertical: false, cols: 1, maxPerPage: 5, minCellH: 43 };
+    return { isVertical: false, cols: 1, maxPerPage: 4, minCellH: 54 };
   }
 
   if (config.kind === "balance") {
@@ -412,14 +412,17 @@ function drawExercisesOnPage(
         doc.line(centerX, ansY + 0.5, centerX + 14, ansY + 0.5);
       }
     } else if (ex.kind === "olympiad" && ex.olympiad) {
+      const hasDiagram = Boolean(ex.olympiad.diagram);
+      const textW = hasDiagram ? cellW - 68 : cellW - 14;
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10.5);
       doc.setTextColor(15, 23, 42);
-      const wrapped = doc.splitTextToSize(ex.olympiad.question, cellW - 14);
+      const wrapped = doc.splitTextToSize(ex.olympiad.question, textW);
       doc.text(wrapped, x + 10, y + 5.5);
 
-      const optsY = y + 5.5 + wrapped.length * 4.8 + 3;
-      const optStep = (cellW - 14) / 5;
+      const optsY = y + 5.5 + wrapped.length * 4.8 + 4;
+      const optStep = textW / 5;
       ex.olympiad.options.forEach((opt, idx) => {
         const isCorrect = opt.label === ex.olympiad?.correctLabel;
         if (showAnswers && isCorrect) {
@@ -429,7 +432,7 @@ function drawExercisesOnPage(
           doc.setFont("helvetica", "bold");
           doc.setTextColor(51, 65, 85);
         }
-        doc.setFontSize(10);
+        doc.setFontSize(9.5);
         doc.text(`${opt.label}) ${opt.value}`, x + 10 + idx * optStep, optsY);
       });
 
@@ -438,6 +441,85 @@ function drawExercisesOnPage(
         doc.setFontSize(9.5);
         doc.setTextColor(22, 163, 74);
         doc.text(`Respuesta: ${ex.answer}`, x + 10, optsY + 6);
+      }
+
+      // Draw vector diagram on the right
+      const diag = ex.olympiad.diagram;
+      if (diag) {
+        const dx = x + cellW - 52;
+        const dy = y + 4;
+        if (diag.type === "rectTriangle") {
+          doc.setDrawColor(15, 23, 42);
+          doc.setLineWidth(0.45);
+          doc.rect(dx + 6, dy + 4, 38, 18);
+          doc.setFillColor(186, 198, 212);
+          doc.triangle(dx + 6, dy + 22, dx + 32, dy + 4, dx + 44, dy + 22, "FD");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8.5);
+          doc.setTextColor(15, 23, 42);
+          doc.text(String(diag.width), dx + 25, dy + 2.5, { align: "center" });
+          doc.text(String(diag.height), dx + 3, dy + 14, { align: "center" });
+        } else if (diag.type === "squareSemicircles") {
+          const sq = 22;
+          const sx = dx + 13;
+          const sy = dy + 4;
+          doc.setDrawColor(15, 23, 42);
+          doc.setLineWidth(0.45);
+          doc.rect(sx, sy, sq, sq);
+          doc.setFillColor(186, 198, 212);
+          // Shaded triangle half representation + diagonal for clean PDF vector rendering
+          doc.triangle(sx, sy, sx + sq, sy, sx + sq, sy + sq, "FD");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8);
+          doc.setTextColor(15, 23, 42);
+          doc.text("A", sx - 3, sy + 2);
+          doc.text("B", sx + sq + 1.5, sy + 2);
+          doc.text("C", sx + sq + 1.5, sy + sq + 1);
+          doc.text("D", sx - 3, sy + sq + 1);
+          doc.setTextColor(37, 99, 235);
+          doc.text(`L = ${diag.side}`, sx + sq / 2, sy + sq + 5.5, { align: "center" });
+        } else if (diag.type === "segment") {
+          const lx = dx + 4;
+          const rx = dx + 46;
+          const ly = dy + 12;
+          const px = lx + (rx - lx) / diag.denom;
+          doc.setDrawColor(15, 23, 42);
+          doc.setLineWidth(0.55);
+          doc.line(lx, ly, rx, ly);
+          doc.setFillColor(15, 23, 42);
+          doc.circle(lx, ly, 1, "F");
+          doc.circle(rx, ly, 1, "F");
+          doc.setFillColor(37, 99, 235);
+          doc.circle(px, ly, 1, "F");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8.5);
+          doc.setTextColor(15, 23, 42);
+          doc.text("A", lx, ly - 3, { align: "center" });
+          doc.setTextColor(37, 99, 235);
+          doc.text("P", px, ly - 3, { align: "center" });
+          doc.setTextColor(15, 23, 42);
+          doc.text("B", rx, ly - 3, { align: "center" });
+          doc.setTextColor(71, 85, 105);
+          doc.text(`${diag.total} cm`, (lx + rx) / 2, ly + 6, { align: "center" });
+        } else if (diag.type === "tiledRoom") {
+          const cell = Math.min(3.8, 38 / diag.cols);
+          const ox = dx + (48 - diag.cols * cell) / 2;
+          const oy = dy + 2;
+          doc.setLineWidth(0.25);
+          doc.setDrawColor(51, 65, 85);
+          for (let r = 0; r < diag.rows; r++) {
+            for (let c = 0; c < diag.cols; c++) {
+              const isBorder =
+                r === 0 || r === diag.rows - 1 || c === 0 || c === diag.cols - 1;
+              if (isBorder) {
+                doc.setFillColor(203, 213, 225);
+                doc.rect(ox + c * cell, oy + r * cell, cell, cell, "FD");
+              } else {
+                doc.rect(ox + c * cell, oy + r * cell, cell, cell, "S");
+              }
+            }
+          }
+        }
       }
     } else {
       // Horizontal standard / mental

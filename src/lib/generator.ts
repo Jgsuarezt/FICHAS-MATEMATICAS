@@ -554,17 +554,18 @@ function buildOlympiadOptions(
 function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercise {
   const templatePool =
     config.difficulty === "facil"
-      ? [0, 1, 2, 3, 4]
+      ? [8, 0, 5, 1, 6, 2, 3, 4]
       : config.difficulty === "medio"
-      ? [1, 2, 3, 4, 5, 6]
-      : [0, 2, 4, 5, 6, 7];
+      ? [8, 5, 6, 9, 1, 2, 3, 4]
+      : [8, 9, 6, 7, 5, 4, 2, 0];
 
-  const tpl = templatePool[(id - 1 + randInt(0, templatePool.length - 1)) % templatePool.length];
+  const tpl = templatePool[(id - 1) % templatePool.length];
   const namesPool = ["Adrián", "María", "Lucía", "Mateo", "Sofía", "Daniel", "Andrea", "Carlos", "Elena", "Hugo"];
 
   let question = "";
   let correctVal = "";
   let distractors: string[] = [];
+  let diagram: NonNullable<GeneratedExercise["olympiad"]>["diagram"] = undefined;
 
   switch (tpl) {
     case 0: {
@@ -598,7 +599,7 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
     }
     case 2: {
       // Precios y compras (estilo Problema 5 OMEC)
-      const pPaleta = randInt(3, 8) * 10; // cents: 0.30..0.80
+      const pPaleta = randInt(3, 8) * 10;
       const pGalleta = randInt(5, 12) * 10;
       const nPal = randInt(2, 4);
       const nGal = randInt(2, 4);
@@ -634,7 +635,7 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
     case 4: {
       // Conteo de pares o impares (estilo Problema 6 OMEC)
       const isOdd = activeRng() > 0.5;
-      const start = randInt(10, 40) * 2; // even
+      const start = randInt(10, 40) * 2;
       const count = randInt(18, 42);
       const end = start + count * 2;
       question = `Heivi escribe todos los números ${isOdd ? "impares" : "pares"} estrictamente entre ${start} y ${end}. ¿Cuántos números escribió?`;
@@ -649,7 +650,7 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
       break;
     }
     case 5: {
-      // Segmento y fracción (estilo Problema 4 OMEC)
+      // Segmento y fracción con gráfico (estilo Problema 4 OMEC)
       const denom = randInt(3, 5);
       const unit = randInt(4, 12);
       const total = denom * unit;
@@ -662,12 +663,13 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
         `${pb + 4} cm`,
         `${Math.floor(total / 2)} cm`,
       ];
+      diagram = { type: "segment", total, denom };
       break;
     }
     case 6: {
-      // Baldosas en el borde de un cuarto (estilo Problema 8 OMEC)
-      const largo = randInt(6, 14);
-      const ancho = randInt(4, largo - 1);
+      // Baldosas en el borde con gráfico (estilo Problema 8 OMEC)
+      const largo = randInt(6, 10);
+      const ancho = randInt(4, Math.min(6, largo - 1));
       const border = 2 * largo + 2 * ancho - 4;
       question = `El piso de un cuarto rectangular está cubierto por baldosas cuadradas. Tiene ${largo} baldosas de largo y ${ancho} de ancho. ¿Cuántas baldosas tocan las paredes del cuarto?`;
       correctVal = String(border);
@@ -677,10 +679,10 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
         String(border - 2),
         String(largo * ancho),
       ];
+      diagram = { type: "tiledRoom", cols: largo, rows: ancho };
       break;
     }
-    case 7:
-    default: {
+    case 7: {
       // Menor entero positivo n para raíz cuadrada exacta (estilo Problema 1 OMEC)
       const base = randInt(5, 11);
       const sq = base * base;
@@ -699,6 +701,38 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
       ];
       break;
     }
+    case 8: {
+      // Rectángulo con triángulo sombreado (estilo Problema 7 OMEC)
+      const height = randInt(4, 9) * 2;
+      const width = randInt(height + 2, 20);
+      const area = (width * height) / 2;
+      question = `En el siguiente rectángulo de ${height} × ${width}, encontrar el área de la región sombreada.`;
+      correctVal = String(area);
+      distractors = [
+        String(width * height),
+        String(area + height),
+        String(Math.max(4, area - width)),
+        String(width + height),
+      ];
+      diagram = { type: "rectTriangle", width, height };
+      break;
+    }
+    case 9:
+    default: {
+      // Cuadrado ABCD con 2 semicírculos sombreados (estilo Problema 10 OMEC)
+      const side = randInt(2, 6) * 2; // even side: 4, 6, 8, 10, 12
+      const area = (side * side) / 2;
+      question = `En la figura se muestra un cuadrado ABCD de lado ${side} y dos semicírculos con diámetros AB y AD. ¿Cuál es el área de la región sombreada?`;
+      correctVal = String(area);
+      distractors = [
+        String(side * side),
+        String(area / 2),
+        String(side * 2),
+        String(area + side),
+      ];
+      diagram = { type: "squareSemicircles", side };
+      break;
+    }
   }
 
   const { options, correctLabel } = buildOlympiadOptions(correctVal, distractors);
@@ -709,6 +743,7 @@ function generateOlympiad(config: WorksheetConfig, id: number): GeneratedExercis
       question,
       options,
       correctLabel,
+      diagram,
     },
     answer: `${correctLabel}) ${correctVal}`,
   };
