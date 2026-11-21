@@ -124,7 +124,15 @@ function getGridLayout(config: WorksheetConfig) {
     return { isVertical, cols: 2, maxPerPage: 16, minCellH: 28 };
   }
 
-  if (config.kind === "fractions" || config.kind === "roman") {
+  if (
+    config.kind === "fractions" ||
+    config.kind === "roman" ||
+    config.kind === "neighbors" ||
+    config.kind === "placeValue" ||
+    config.kind === "ruleOfThree" ||
+    config.kind === "mcmMcd" ||
+    config.kind === "combined"
+  ) {
     return { isVertical, cols: 2, maxPerPage: 20, minCellH: 26 };
   }
 
@@ -167,19 +175,20 @@ function drawExercisesOnPage(
     const x = marginX + col * cellW;
     const y = startY + row * cellH;
 
-    // Exercise number badge
+    // Exercise number badge (aligned on the same row as division/first line)
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
+    doc.setFontSize(9);
     doc.setTextColor(148, 163, 184);
-    doc.text(`${ex.id})`, x + 2, y + 4);
+    const badgeY = isVertical && ex.kind === "division" ? y + 7.5 : y + 5;
+    doc.text(`${ex.id})`, x + 1.5, badgeY);
 
     if (useGrid) {
       if (isVertical && ex.kind === "division") {
-        drawMathGrid(doc, x + 8, y + 3, cellW - 14, cellH - 8, 5);
+        drawMathGrid(doc, x + 9, y + 2, cellW - 15, cellH - 7, 5);
       } else if (isVertical) {
-        drawMathGrid(doc, x + 8, y + 3, cellW - 14, cellH - 7, 5);
+        drawMathGrid(doc, x + 9, y + 2, cellW - 15, cellH - 6, 5);
       } else {
-        drawMathGrid(doc, x + 8, y + 14, cellW - 14, Math.max(15, cellH - 18), 5);
+        drawMathGrid(doc, x + 9, y + 14, cellW - 15, Math.max(15, cellH - 18), 5);
       }
     }
 
@@ -188,18 +197,18 @@ function drawExercisesOnPage(
     doc.setFontSize(baseFont);
 
     if (isVertical && ex.kind === "division") {
-      // Draw Spanish division box: Dividend | Divisor with generous room below & right
-      const cx = x + 12;
-      const cy = y + 11;
+      // Draw Spanish division box on the exact same row as the badge, with spacing
+      const cx = x + 13;
+      const cy = y + 7.5;
       const aStr = String(ex.a ?? "");
       const bStr = String(ex.b ?? "");
       doc.text(aStr, cx, cy);
       const aWidth = doc.getTextWidth(aStr);
-      const boxX = cx + aWidth + 3;
+      const boxX = cx + aWidth + 3.5;
       const boxW = Math.max(14, doc.getTextWidth(bStr) + 6);
       doc.setDrawColor(30, 41, 59);
       doc.setLineWidth(0.5);
-      doc.line(boxX, cy - 5, boxX, cy + 2);
+      doc.line(boxX, cy - 4.5, boxX, cy + 2);
       doc.line(boxX, cy + 2, boxX + boxW, cy + 2);
       doc.text(bStr, boxX + 2.5, cy);
 
@@ -298,6 +307,28 @@ function drawExercisesOnPage(
         doc.setDrawColor(148, 163, 184);
         const px = x + 11 + doc.getTextWidth(ex.romanPrompt ?? "") + 3;
         doc.line(px, y + 10.5, px + 22, y + 10.5);
+      }
+    } else if (ex.promptText) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11.5);
+      doc.text(ex.promptText, x + 10, y + 10);
+      if (showAnswers) {
+        doc.setFontSize(10);
+        doc.setTextColor(22, 163, 74);
+        const promptW = doc.getTextWidth(ex.promptText);
+        if (ex.kind === "neighbors" || ex.kind === "placeValue" || ex.kind === "ruleOfThree") {
+          doc.text(`Sol: ${ex.answer}`, x + 10, y + 17);
+        } else {
+          doc.text(ex.answer, x + 10 + promptW + 3, y + 10);
+        }
+      } else if (
+        ex.kind === "decimals" ||
+        ex.kind === "mcmMcd" ||
+        ex.kind === "combined"
+      ) {
+        doc.setDrawColor(148, 163, 184);
+        const px = x + 10 + doc.getTextWidth(ex.promptText) + 2;
+        doc.line(px, y + 10.5, px + 18, y + 10.5);
       }
     } else {
       // Horizontal standard / mental

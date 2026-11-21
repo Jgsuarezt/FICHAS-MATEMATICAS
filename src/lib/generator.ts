@@ -343,6 +343,144 @@ function generateMental(config: WorksheetConfig, id: number): GeneratedExercise 
   return { id, kind: "mental", a, b, operator: "×", answer: String(a * b) };
 }
 
+function generateNeighbors(config: WorksheetConfig, id: number): GeneratedExercise {
+  const maxVal =
+    config.difficulty === "facil" ? 29 : config.difficulty === "medio" ? 199 : 999;
+  const n = randInt(2, maxVal);
+  return {
+    id,
+    kind: "neighbors",
+    a: n,
+    promptText: `____  <  ${n}  <  ____`,
+    answer: `${n - 1}, ${n + 1}`,
+  };
+}
+
+function generatePlaceValue(config: WorksheetConfig, id: number): GeneratedExercise {
+  if (config.difficulty === "facil") {
+    const d = randInt(1, 9);
+    const u = randInt(0, 9);
+    const n = d * 10 + u;
+    return {
+      id,
+      kind: "placeValue",
+      promptText: `${n} =  ___ D + ___ U`,
+      answer: `${d} D + ${u} U`,
+    };
+  }
+  const c = randInt(1, 9);
+  const d = randInt(0, 9);
+  const u = randInt(0, 9);
+  const n = c * 100 + d * 10 + u;
+  if (activeRng() > 0.5 && config.difficulty === "dificil") {
+    return {
+      id,
+      kind: "placeValue",
+      promptText: `${c} C + ${d} D + ${u} U =`,
+      answer: String(n),
+    };
+  }
+  return {
+    id,
+    kind: "placeValue",
+    promptText: `${n} =  ___ C + ___ D + ___ U`,
+    answer: `${c} C + ${d} D + ${u} U`,
+  };
+}
+
+function generateDecimals(config: WorksheetConfig, id: number): GeneratedExercise {
+  const scale = config.difficulty === "facil" ? 10 : 100;
+  const maxBase = config.difficulty === "dificil" ? 99 : 25;
+  const isSub = activeRng() < 0.4;
+  let aInt = randInt(scale, maxBase * scale);
+  let bInt = randInt(Math.floor(scale / 2), maxBase * scale);
+  if (isSub && aInt < bInt) [aInt, bInt] = [bInt, aInt];
+  const aStr = (aInt / scale).toFixed(scale === 10 ? 1 : 2).replace(".", ",");
+  const bStr = (bInt / scale).toFixed(scale === 10 ? 1 : 2).replace(".", ",");
+  const resInt = isSub ? aInt - bInt : aInt + bInt;
+  const ansStr = (resInt / scale).toFixed(scale === 10 ? 1 : 2).replace(".", ",");
+  return {
+    id,
+    kind: "decimals",
+    operator: isSub ? "-" : "+",
+    promptText: `${aStr} ${isSub ? "-" : "+"} ${bStr} =`,
+    answer: ansStr,
+  };
+}
+
+function generateRuleOfThree(config: WorksheetConfig, id: number): GeneratedExercise {
+  const unitVal = randInt(2, config.difficulty === "facil" ? 5 : 12);
+  const a = randInt(2, config.difficulty === "facil" ? 6 : 10);
+  let c = randInt(2, config.difficulty === "dificil" ? 15 : 10);
+  if (c === a) c += 1;
+  const b = a * unitVal;
+  const ans = c * unitVal;
+  return {
+    id,
+    kind: "ruleOfThree",
+    promptText: `${a}  ->  ${b}   |   ${c}  ->  ___`,
+    answer: String(ans),
+  };
+}
+
+function generateMcmMcd(config: WorksheetConfig, id: number): GeneratedExercise {
+  const pool =
+    config.difficulty === "facil"
+      ? [4, 6, 8, 9, 10, 12]
+      : config.difficulty === "medio"
+      ? [6, 8, 10, 12, 14, 15, 16, 18, 20, 24]
+      : [12, 15, 18, 20, 24, 28, 30, 36, 40, 45];
+  const a = pool[randInt(0, pool.length - 1)];
+  let b = pool[randInt(0, pool.length - 1)];
+  if (b === a) b = pool[(pool.indexOf(a) + 1) % pool.length];
+  const isMcm = activeRng() > 0.45;
+  const g = gcd(a, b);
+  const ans = isMcm ? (a * b) / g : g;
+  return {
+    id,
+    kind: "mcmMcd",
+    promptText: `${isMcm ? "MCM" : "MCD"}(${a}, ${b}) =`,
+    answer: String(ans),
+  };
+}
+
+function generateCombined(config: WorksheetConfig, id: number): GeneratedExercise {
+  const a = randInt(2, config.difficulty === "facil" ? 9 : 15);
+  const b = randInt(2, config.difficulty === "facil" ? 9 : 12);
+  const c = randInt(2, config.difficulty === "facil" ? 5 : 9);
+  const d = randInt(1, 10);
+
+  if (config.difficulty === "facil") {
+    // a + b x c
+    const ans = a + b * c;
+    return {
+      id,
+      kind: "combined",
+      promptText: `${a} + ${b} × ${c} =`,
+      answer: String(ans),
+    };
+  }
+  if (config.difficulty === "medio") {
+    // (a + b) x c
+    const ans = (a + b) * c;
+    return {
+      id,
+      kind: "combined",
+      promptText: `(${a} + ${b}) × ${c} =`,
+      answer: String(ans),
+    };
+  }
+  // (a + b) x c - d (ensure positive)
+  const base = (a + b) * c;
+  const sub = Math.min(d, base - 1);
+  return {
+    id,
+    kind: "combined",
+    promptText: `(${a} + ${b}) × ${c} - ${sub} =`,
+    answer: String(base - sub),
+  };
+}
+
 export function generateWorksheet(
   config: WorksheetConfig,
   seed = 1
@@ -380,13 +518,31 @@ export function generateWorksheet(
         case "roman":
           candidate = generateRoman(config, i);
           break;
+        case "neighbors":
+          candidate = generateNeighbors(config, i);
+          break;
+        case "placeValue":
+          candidate = generatePlaceValue(config, i);
+          break;
+        case "decimals":
+          candidate = generateDecimals(config, i);
+          break;
+        case "ruleOfThree":
+          candidate = generateRuleOfThree(config, i);
+          break;
+        case "mcmMcd":
+          candidate = generateMcmMcd(config, i);
+          break;
+        case "combined":
+          candidate = generateCombined(config, i);
+          break;
         case "mental":
         default:
           candidate = generateMental(config, i);
           break;
       }
 
-      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
+      const key = `${candidate.a}-${candidate.operator}-${candidate.b}-${candidate.romanPrompt}-${candidate.promptText}-${candidate.sequence?.join(",")}-${candidate.fracA?.num}/${candidate.fracA?.den}`;
       if (!seen.has(key) || retry === 14) {
         seen.add(key);
         ex = candidate;

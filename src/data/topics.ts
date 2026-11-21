@@ -677,6 +677,251 @@ export const TOPICS: TopicDefinition[] = [
       ],
     },
   },
+  {
+    slug: "anterior-y-posterior",
+    name: "Número anterior y posterior",
+    shortName: "Anterior y posterior",
+    category: "Numeración",
+    grades: ["infantil", "1-primaria", "2-primaria"],
+    badge: "Nuevo",
+    description:
+      "Fichas para practicar qué número va antes y después de un número dado, ideal para afianzar la recta numérica.",
+    seoTitle: "Fichas de Número Anterior y Posterior en PDF Gratis",
+    seoDescription:
+      "Descarga fichas de anterior y posterior en PDF gratis para Infantil y 1.º de Primaria. Ejercicios hasta el 1000 con solucionario.",
+    defaultConfig: {
+      kind: "neighbors",
+      difficulty: "facil",
+      count: 20,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "grande",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Identificar el número anterior (-1) y posterior (+1) es clave en Infantil y primeros cursos de Primaria para comprender el orden de la serie numérica.",
+      howToTeach: [
+        "Empieza con números del 1 al 30 usando una recta numérica dibujada.",
+        "Presta especial atención a los cambios de decena (ej. anterior a 20 o posterior a 39).",
+      ],
+      tips: [
+        "El nivel Fácil llega hasta el 30, Medio hasta el 200 y Difícil hasta el 999.",
+      ],
+      faqs: [
+        {
+          q: "¿Cómo se escriben las respuestas en el modo interactivo?",
+          a: "Escribe el número anterior y el posterior separados por una coma (ej. 14, 16).",
+        },
+      ],
+    },
+  },
+  {
+    slug: "unidades-decenas-centenas",
+    name: "Unidades, decenas y centenas",
+    shortName: "Unidades, Decenas y Centenas",
+    category: "Numeración",
+    grades: ["1-primaria", "2-primaria", "3-primaria"],
+    badge: "Nuevo",
+    description:
+      "Descomposición numérica en unidades (U), decenas (D) y centenas (C) para dominar el valor posicional.",
+    seoTitle: "Fichas de Unidades, Decenas y Centenas en PDF Gratis",
+    seoDescription:
+      "Genera fichas de descomposición de números en unidades, decenas y centenas en PDF con respuestas.",
+    defaultConfig: {
+      kind: "placeValue",
+      difficulty: "medio",
+      count: 16,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 3,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Comprender que el dígito 3 en 345 vale 300 (3 centenas) es la base de las sumas y restas con llevadas.",
+      howToTeach: [
+        "Asocia las unidades a 1, las decenas a grupos de 10 y las centenas a grupos de 100.",
+      ],
+      tips: [
+        "Usa el nivel Fácil para trabajar solo decenas y unidades (números de 2 cifras).",
+      ],
+      faqs: [
+        {
+          q: "¿Incluye ejercicios inversos?",
+          a: "Sí, en nivel Difícil también se pide formar el número a partir de sus C, D y U.",
+        },
+      ],
+    },
+  },
+  {
+    slug: "numeros-decimales",
+    name: "Sumas y restas con decimales",
+    shortName: "Números decimales",
+    category: "Fracciones",
+    grades: ["4-primaria", "5-primaria", "6-primaria"],
+    badge: "Nuevo",
+    description:
+      "Ejercicios de sumas y restas con números decimales (décimas y centésimas) con solucionario incluido.",
+    seoTitle: "Fichas de Sumas y Restas con Decimales en PDF Gratis",
+    seoDescription:
+      "Descarga fichas de números decimales en PDF para 4.º, 5.º y 6.º de Primaria. Sumas y restas con décimas y centésimas.",
+    defaultConfig: {
+      kind: "decimals",
+      difficulty: "medio",
+      count: 20,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 2,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Operar con números decimales requiere alinear correctamente las comas decimales antes de sumar o restar como con números naturales.",
+      howToTeach: [
+        "Recuerda al alumno que la coma decimal siempre debe quedar en la misma columna.",
+        "Si un número tiene menos decimales, se puede completar con ceros a la derecha.",
+      ],
+      tips: [
+        "Activa la cuadrícula de 5 mm si quieres que alineen la coma en columna debajo de cada ejercicio.",
+      ],
+      faqs: [
+        {
+          q: "¿Cuántos decimales tienen los ejercicios?",
+          a: "En nivel Fácil tienen 1 decimal (décimas) y en Medio/Difícil 2 decimales (centésimas).",
+        },
+      ],
+    },
+  },
+  {
+    slug: "regla-de-tres",
+    name: "Regla de tres simple",
+    shortName: "Regla de tres",
+    category: "Tablas y Cálculo",
+    grades: ["5-primaria", "6-primaria"],
+    badge: "Nuevo",
+    description:
+      "Practica la proporcionalidad directa mediante ejercicios de regla de tres simple con resultados exactos.",
+    seoTitle: "Fichas de Regla de Tres Simple en PDF Gratis + Soluciones",
+    seoDescription:
+      "Genera fichas de regla de tres simple directa en PDF gratis para 5.º y 6.º de Primaria con solucionario.",
+    defaultConfig: {
+      kind: "ruleOfThree",
+      difficulty: "medio",
+      count: 16,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 2,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "La regla de tres simple directa permite hallar un cuarto valor desconocido a partir de tres valores proporcionales conocidos.",
+      howToTeach: [
+        "Enseña primero el método de reducción a la unidad: cuánto vale 1 unidad y luego multiplicar.",
+        "Comprueba la relación multiplicando en cruz y dividiendo.",
+      ],
+      tips: [
+        "Todas las fichas generan resultados enteros exactos para evitar confusiones iniciales.",
+      ],
+      faqs: [
+        {
+          q: "¿Todos los ejercicios son de proporcionalidad directa?",
+          a: "Sí, están pensados para iniciar y consolidar la regla de tres directa en Primaria.",
+        },
+      ],
+    },
+  },
+  {
+    slug: "mcm-y-mcd",
+    name: "MCM y MCD (Mínimo Común Múltiplo y Máximo Común Divisor)",
+    shortName: "MCM y MCD",
+    category: "Numeración",
+    grades: ["5-primaria", "6-primaria"],
+    badge: "Nuevo",
+    description:
+      "Ejercicios para calcular el Mínimo Común Múltiplo (MCM) y el Máximo Común Divisor (MCD) de pares de números.",
+    seoTitle: "Fichas de MCM y MCD en PDF Gratis + Solucionario",
+    seoDescription:
+      "Descarga fichas de Mínimo Común Múltiplo (MCM) y Máximo Común Divisor (MCD) en PDF gratis para 5.º y 6.º de Primaria.",
+    defaultConfig: {
+      kind: "mcmMcd",
+      difficulty: "medio",
+      count: 16,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 2,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "El MCM y el MCD son fundamentales para sumar fracciones de distinto denominador y para simplificar fracciones.",
+      howToTeach: [
+        "Para el MCM: descompón en factores primos y multiplica factores comunes y no comunes al mayor exponente.",
+        "Para el MCD: multiplica solo los factores comunes al menor exponente.",
+      ],
+      tips: [
+        "Activa la cuadrícula de 5 mm para que el alumno haga la descomposición factorial debajo de cada ejercicio.",
+      ],
+      faqs: [
+        {
+          q: "¿La ficha mezcla MCM y MCD?",
+          a: "Sí, cada ejercicio indica claramente si debe calcularse el MCM o el MCD.",
+        },
+      ],
+    },
+  },
+  {
+    slug: "operaciones-combinadas",
+    name: "Operaciones combinadas con paréntesis",
+    shortName: "Operaciones combinadas",
+    category: "Tablas y Cálculo",
+    grades: ["4-primaria", "5-primaria", "6-primaria"],
+    badge: "Nuevo",
+    description:
+      "Practica la jerarquía de operaciones (paréntesis, multiplicaciones, sumas y restas) con solucionario.",
+    seoTitle: "Fichas de Operaciones Combinadas en PDF Gratis + Respuestas",
+    seoDescription:
+      "Genera fichas de operaciones combinadas con paréntesis para Primaria en PDF gratis con solucionario.",
+    defaultConfig: {
+      kind: "combined",
+      difficulty: "medio",
+      count: 16,
+      layout: "horizontal",
+      carry: false,
+      digitsA: 2,
+      digitsB: 1,
+      includeAnswers: true,
+      fontSize: "normal",
+    },
+    pedagogicalGuide: {
+      intro:
+        "Las operaciones combinadas enseñan la jerarquía matemática: primero paréntesis, luego multiplicaciones y divisiones, y por último sumas y restas.",
+      howToTeach: [
+        "Subraya en cada paso la operación que toca resolver primero.",
+        "Empieza por el nivel Fácil (sin paréntesis) antes de pasar a Medio y Difícil.",
+      ],
+      tips: [
+        "Activa la cuadrícula para que puedan escribir los pasos intermedios ordenadamente debajo.",
+      ],
+      faqs: [
+        {
+          q: "¿Qué incluye cada nivel?",
+          a: "Fácil: sumas y multiplicaciones; Medio: paréntesis y multiplicación; Difícil: paréntesis, multiplicación y resta.",
+        },
+      ],
+    },
+  },
 ];
 
 export function getTopicBySlug(slug: string): TopicDefinition | undefined {

@@ -7,7 +7,13 @@ export type ExerciseKind =
   | "comparison"
   | "sequence"
   | "roman"
-  | "mental";
+  | "mental"
+  | "neighbors"
+  | "placeValue"
+  | "decimals"
+  | "ruleOfThree"
+  | "mcmMcd"
+  | "combined";
 
 export type DifficultyLevel = "facil" | "medio" | "dificil";
 
@@ -46,8 +52,9 @@ export interface GeneratedExercise {
   fracB?: FractionValue;
   // For sequence
   sequence?: (number | null)[];
-  // For roman
+  // For roman or text-based prompts (neighbors, placeValue, ruleOfThree, mcmMcd, combined)
   romanPrompt?: string;
+  promptText?: string;
   // Answer representation
   answer: string;
   // Optional extra note (e.g., remainder)

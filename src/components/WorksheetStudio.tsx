@@ -484,14 +484,19 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
             className={`mt-8 grid gap-x-6 gap-y-8 ${
               isVertical && config.kind === "division"
                 ? "grid-cols-1 sm:grid-cols-2"
-                : config.kind === "sequence"
+                : config.kind === "sequence" ||
+                  config.kind === "fractions" ||
+                  config.kind === "roman" ||
+                  config.kind === "neighbors" ||
+                  config.kind === "placeValue" ||
+                  config.kind === "ruleOfThree" ||
+                  config.kind === "mcmMcd" ||
+                  config.kind === "combined"
                 ? "grid-cols-1 sm:grid-cols-2"
                 : isVertical
                 ? config.count <= 12
                   ? "grid-cols-2 sm:grid-cols-3"
                   : "grid-cols-2 sm:grid-cols-4"
-                : config.kind === "fractions" || config.kind === "roman"
-                ? "grid-cols-1 sm:grid-cols-2"
                 : "grid-cols-1 sm:grid-cols-3"
             }`}
           >
@@ -506,27 +511,45 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                   ? "min-h-[140px]"
                   : "";
 
+              if (isVertical && ex.kind === "division") {
+                return (
+                  <div key={ex.id} className="flex items-start gap-3">
+                    <span className="pt-1 text-sm font-bold text-slate-400">
+                      {ex.id})
+                    </span>
+                    <div
+                      className={`flex-1 flex flex-col ${gridBgClass} ${divisionSpaceClass}`}
+                    >
+                      <div
+                        className={`flex items-start font-mono font-bold text-slate-900 ${
+                          config.fontSize === "grande" ? "text-2xl" : "text-xl"
+                        }`}
+                      >
+                        <span className="pr-3 tracking-wide">{ex.a}</span>
+                        <div className="border-b-2 border-l-2 border-slate-800 px-3 pb-0.5">
+                          {ex.b}
+                        </div>
+                      </div>
+                      {showAnswersOnScreen && (
+                        <div className="mt-2 text-xs font-bold text-emerald-600">
+                          Cociente: {ex.answer}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
               return (
               <div
                 key={ex.id}
-                className={`relative flex flex-col ${gridBgClass} ${divisionSpaceClass} ${verticalSpaceClass}`}
+                className={`relative flex flex-col ${gridBgClass} ${verticalSpaceClass}`}
               >
                 <span className="mb-1 text-xs font-bold text-slate-400">
                   {ex.id})
                 </span>
 
-                {isVertical && ex.kind === "division" ? (
-                  <div
-                    className={`flex items-start font-mono font-bold text-slate-900 ${
-                      config.fontSize === "grande" ? "text-2xl" : "text-xl"
-                    }`}
-                  >
-                    <span className="pr-2">{ex.a}</span>
-                    <div className="border-b-2 border-l-2 border-slate-800 px-2.5 pb-0.5">
-                      {ex.b}
-                    </div>
-                  </div>
-                ) : isVertical ? (
+                {isVertical ? (
                   <div
                     className={`inline-flex w-28 flex-col items-end font-mono font-bold text-slate-900 ${
                       config.fontSize === "grande" ? "text-2xl" : "text-xl"
@@ -614,6 +637,23 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                       <span className="inline-block w-20 border-b-2 border-slate-300" />
                     )}
                   </div>
+                ) : ex.promptText ? (
+                  <div
+                    className={`flex flex-wrap items-center gap-2 font-mono font-bold text-slate-900 ${
+                      config.fontSize === "grande" ? "text-xl" : "text-base"
+                    }`}
+                  >
+                    <span>{ex.promptText}</span>
+                    {showAnswersOnScreen ? (
+                      <span className="text-emerald-600">{ex.answer}</span>
+                    ) : (
+                      (ex.kind === "decimals" ||
+                        ex.kind === "mcmMcd" ||
+                        ex.kind === "combined") && (
+                        <span className="inline-block w-16 border-b-2 border-slate-300" />
+                      )
+                    )}
+                  </div>
                 ) : (
                   <div
                     className={`flex items-center gap-2 font-mono font-bold text-slate-900 ${
@@ -628,12 +668,6 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                     ) : (
                       <span className="inline-block w-14 border-b-2 border-slate-300" />
                     )}
-                  </div>
-                )}
-
-                {isVertical && ex.kind === "division" && showAnswersOnScreen && (
-                  <div className="mt-1.5 text-xs font-bold text-emerald-600">
-                    Cociente: {ex.answer}
                   </div>
                 )}
               </div>
@@ -694,7 +728,7 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                   </div>
 
                   <div className="mt-2 flex items-center justify-between gap-3">
-                    <div className="font-mono text-lg font-bold text-slate-900">
+                    <div className="font-mono text-base font-bold text-slate-900">
                       {ex.kind === "fractions" && ex.fracA && ex.fracB
                         ? `${ex.fracA.num}/${ex.fracA.den} ${ex.operator} ${ex.fracB.num}/${ex.fracB.den} =`
                         : ex.kind === "comparison"
@@ -703,6 +737,8 @@ export default function WorksheetStudio({ topic }: WorksheetStudioProps) {
                         ? ex.sequence.map((n) => (n === null ? "?" : n)).join(", ")
                         : ex.kind === "roman"
                         ? ex.romanPrompt
+                        : ex.promptText
+                        ? ex.promptText
                         : `${ex.a} ${ex.operator} ${ex.b} =`}
                     </div>
 
